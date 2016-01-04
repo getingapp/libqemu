@@ -294,6 +294,7 @@ solaris="no"
 profiler="no"
 cocoa="no"
 softmmu="yes"
+libqemu="no"
 linux_user="no"
 bsd_user="no"
 aix="no"
@@ -984,6 +985,10 @@ for opt do
   ;;
   --enable-bsd-user) bsd_user="yes"
   ;;
+  --enable-lib) libqemu="yes"
+  ;;
+  --disable-lib) libqemu="no"
+  ;;
   --enable-pie) pie="yes"
   ;;
   --disable-pie) pie="no"
@@ -1250,6 +1255,9 @@ if [ "$linux_user" = "yes" ]; then
 fi
 if [ "$bsd_user" = "yes" ]; then
     mak_wilds="${mak_wilds} $source_path/default-configs/*-bsd-user.mak"
+fi
+if [ "$libqemu" = "yes" ]; then
+    mak_wilds="${mak_wilds} $source_path/default-configs/*-lib.mak"
 fi
 
 for config in $mak_wilds; do
@@ -5520,7 +5528,11 @@ target_softmmu="no"
 target_user_only="no"
 target_linux_user="no"
 target_bsd_user="no"
+target_lib="no"
 case "$target" in
+  ${target_name}-lib)
+    target_lib="yes"
+    ;;
   ${target_name}-softmmu)
     target_softmmu="yes"
     ;;
@@ -5743,6 +5755,10 @@ if test "$target_user_only" = "yes" -a "$bflt" = "yes"; then
 fi
 if test "$target_bsd_user" = "yes" ; then
   echo "CONFIG_BSD_USER=y" >> $config_target_mak
+fi
+
+if test "$target_lib" = "yes" ; then
+  echo "CONFIG_LIBQEMU=y" >> $config_target_mak
 fi
 
 # generate QEMU_CFLAGS/LDFLAGS for targets
