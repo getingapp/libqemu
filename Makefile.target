@@ -20,6 +20,10 @@ ifdef CONFIG_USER_ONLY
 QEMU_PROG=qemu-$(TARGET_NAME)
 QEMU_PROG_BUILD = $(QEMU_PROG)
 else
+ifdef CONFIG_LIBQEMU
+QEMU_PROG=libqemu-$(TARGET_NAME)$(DSOSUF)
+QEMU_PROG_BUILD = $(QEMU_PROG)
+else
 # system emulator name
 QEMU_PROG=qemu-system-$(TARGET_NAME)$(EXESUF)
 ifneq (,$(findstring -mwindows,$(libs_softmmu)))
@@ -30,6 +34,7 @@ $(QEMU_PROG): $(QEMU_PROGW)
 QEMU_PROG_BUILD = $(QEMU_PROGW)
 else
 QEMU_PROG_BUILD = $(QEMU_PROG)
+endif
 endif
 endif
 
@@ -157,6 +162,30 @@ endif
 GENERATED_HEADERS += hmp-commands.h hmp-commands-info.h qmp-commands-old.h
 
 endif # CONFIG_SOFTMMU
+
+#########################################################
+# Qemu library target
+ifdef CONFIG_LIBQEMU
+#obj-y += arch_init.o cpus.o monitor.o gdbstub.o balloon.o ioport.o numa.o
+#obj-y += qtest.o bootdevice.o
+#obj-y += hw/
+#obj-$(CONFIG_KVM) += kvm-all.o
+#obj-y += memory.o cputlb.o
+#obj-y += memory_mapping.o
+#obj-y += dump.o
+#obj-y += migration/ram.o migration/savevm.o
+LIBS := $(libs_softmmu) $(LIBS)
+
+# Hardware support
+#ifeq ($(TARGET_NAME), sparc64)
+#obj-y += hw/sparc64/
+#else
+#obj-y += hw/$(TARGET_BASE_ARCH)/
+#endif
+
+GENERATED_HEADERS += hmp-commands.h hmp-commands-info.h qmp-commands-old.h
+
+endif # CONFIG_LIBQEMU
 
 # Workaround for http://gcc.gnu.org/PR55489, see configure.
 %/translate.o: QEMU_CFLAGS += $(TRANSLATE_OPT_CFLAGS)

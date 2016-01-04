@@ -38,7 +38,7 @@ io-obj-y = io/
 # suppress *all* target specific code in case of system emulation, i.e. a
 # single QEMU executable should support all CPUs and machines.
 
-ifeq ($(CONFIG_SOFTMMU),y)
+ifeq ($(CONFIG_SOFTMMU),y) 
 common-obj-y = blockdev.o blockdev-nbd.o block/
 common-obj-y += iothread.o
 common-obj-y += net/
@@ -86,6 +86,10 @@ common-obj-y += qmp-introspect.o
 common-obj-y += qmp.o hmp.o
 endif
 
+ifeq ($(CONFIG_LIBQEMU),y) 
+common-obj-y = qemu-lib.o
+endif
+
 #######################################################################
 # Target-independent parts used in system and user emulation
 common-obj-y += qemu-log.o
@@ -116,3 +120,4 @@ qga-vss-dll-obj-y = qga/
 # contrib
 ivshmem-client-obj-y = contrib/ivshmem-client/
 ivshmem-server-obj-y = contrib/ivshmem-server/
+
