@@ -745,6 +745,9 @@ if test "$mingw32" = "yes" ; then
   confsuffix=""
   libs_qga="-lws2_32 -lwinmm -lpowrprof -liphlpapi -lnetapi32 $libs_qga"
 fi
+if test "$darwin" = "yes" ; then
+  DSOSUF=".dylib"
+fi
 
 werror=""
 
@@ -5759,6 +5762,7 @@ fi
 
 if test "$target_lib" = "yes" ; then
   echo "CONFIG_LIBQEMU=y" >> $config_target_mak
+  echo "CONFIG_SOFTMMU=y" >> $config_target_mak
 fi
 
 # generate QEMU_CFLAGS/LDFLAGS for targets
