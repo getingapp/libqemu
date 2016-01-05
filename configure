@@ -5761,6 +5761,7 @@ if test "$target_bsd_user" = "yes" ; then
 fi
 
 if test "$target_lib" = "yes" ; then
+  echo "QEMU_CFLAGS+=-fPIC" >> $config_target_mak
   echo "CONFIG_LIBQEMU=y" >> $config_target_mak
   echo "CONFIG_SOFTMMU=y" >> $config_target_mak
 fi
