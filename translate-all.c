@@ -1338,7 +1338,7 @@ void tb_invalidate_phys_page_fast(tb_page_addr_t start, int len)
     }
 }
 
-#if !defined(CONFIG_SOFTMMU)
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
 /* Called with mmap_lock held.  */
 static void tb_invalidate_phys_page(tb_page_addr_t addr,
                                     uintptr_t pc, void *puc,

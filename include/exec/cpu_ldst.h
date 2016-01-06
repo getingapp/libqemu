@@ -71,10 +71,11 @@
     assert(h2g_valid(x)); \
     h2g_nocheck(x); \
 })
-
+#elif defined(CONFIG_LIBQEMU)
+#define g2h(x) ((void *)((unsigned long)(target_ulong)(x)))
 #endif
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 
 /* In user-only mode we provide only the _code and _data accessors. */
 

@@ -7498,7 +7498,7 @@ void HELPER(dc_zva)(CPUARMState *env, uint64_t vaddr_in)
     uint64_t blocklen = 4 << cpu->dcz_blocksize;
     uint64_t vaddr = vaddr_in & ~(blocklen - 1);
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     {
         /* Slightly awkwardly, QEMU's TARGET_PAGE_SIZE may be less than
          * the block size so we might have to do more than one TLB lookup.
