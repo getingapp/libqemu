@@ -417,6 +417,8 @@ query_pkg_config() {
 pkg_config=query_pkg_config
 sdl_config="${SDL_CONFIG-${cross_prefix}sdl-config}"
 sdl2_config="${SDL2_CONFIG-${cross_prefix}sdl2-config}"
+clang="${CLANG-clang}"
+clangxx="${CLANGXX-clang++}"
 llvm_config="${LLVM_CONFIG-llvm-config}"
 
 # If the user hasn't specified ARFLAGS, default to 'rv', just as make does.
@@ -777,6 +779,10 @@ for opt do
   --host-cc=*) host_cc="$optarg"
   ;;
   --cxx=*)
+  ;;
+  --clang=*) clang="$optarg"
+  ;;
+  --clangxx=*) clangxx="$optarg"
   ;;
   --iasl=*) iasl="$optarg"
   ;;
@@ -3310,7 +3316,6 @@ fi
 llvm_version_major_required=3
 llvm_version_minor_required=4
 
-llvm=no
 llvm_required=no
 llvm_components="jit bitreader bitwriter ipo linker engine"
 for target in $target_list; do
@@ -3321,9 +3326,13 @@ for target in $target_list; do
   esac
 done
 
+llvm=no
 if test "$llvm_required" = "yes"; then
 cat > $TMPCXX << EOF
 #include <llvm/IR/LLVMContext.h>
+#if LLVM_VERSION_MAJOR != $llvm_version_major_required || LLVM_VERSION_MINOR != $llvm_version_minor_required
+#error Wrong LLVM version
+#endif
 int main(void) { llvm::LLVMContext& c = llvm::getGlobalContext(); return &c != NULL; }
 EOF
   llvm_version=$( $llvm_config --version 2> /dev/null | cut -d. -f1,2 )
@@ -3346,6 +3355,30 @@ EOF
     error_exit "Compiling LLVM code is broken."
   fi
 fi
+
+##########################################
+# clang++ probe
+if test "$llvm_required" = "yes"; then
+cat > $TMPC << EOF
+#if __clang__ != 1
+#error Compiler must be clang
+#endif
+
+#if __clang_major__ != $llvm_version_major_required || __clang_minor__ != $llvm_version_minor_required
+#error Wrong Clang/LLVM version
+#endif
+int main(void) {return 0;}
+EOF
+  if $clang -c -o /dev/null $TMPC 2> /dev/null 1> /dev/null; then
+    : Clang is good
+  else
+    error_exit "Clang is required by LLVM, but does not work." \
+      "Pass a clang with --clang=... to configure, and make sure that " \
+      "its version corresponds to the required LLVM version (${llvm_version_major_required}.${llvm_version_minor_required})."
+  fi
+
+  
+fi  
 
 ##########################################
 # fdt probe
@@ -5508,6 +5541,7 @@ fi
 echo "CC_I386=$cc_i386" >> $config_host_mak
 echo "HOST_CC=$host_cc" >> $config_host_mak
 echo "CXX=$cxx" >> $config_host_mak
+echo "CLANG=$clang" >> $config_host_mak
 echo "OBJCC=$objcc" >> $config_host_mak
 echo "AR=$ar" >> $config_host_mak
 echo "ARFLAGS=$ARFLAGS" >> $config_host_mak
