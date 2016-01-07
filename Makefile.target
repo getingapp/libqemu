@@ -214,6 +214,9 @@ all-obj-y += $(qom-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(block-obj-y)
 all-obj-$(CONFIG_USER_ONLY) += $(crypto-aes-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(crypto-obj-y)
+all-obj-$(CONFIG_LIBQEMU) += helpers.o tcg-llvm.o
+
+tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS)
 
 $(QEMU_PROG_BUILD): config-devices.mak
 
@@ -243,6 +246,7 @@ qmp-commands-old.h: $(SRC_PATH)/qmp-commands.hx
 clean:
 	rm -f *.a *~ $(PROGS)
 	rm -f $(shell find . -name '*.[od]')
+	rm -f $(shell find . -name '*.bc' -o -name '*.bcm')
 	rm -f hmp-commands.h qmp-commands-old.h gdbstub-xml.c
 ifdef CONFIG_TRACE_SYSTEMTAP
 	rm -f *.stp
