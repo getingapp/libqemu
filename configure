@@ -3316,6 +3316,7 @@ fi
 ##########################################
 # llvm probe
 # llvm is required for the libqemu targets
+llvm=no
 llvm_required=no
 llvm_version_required="3.4"
 llvm_components="jit bitreader bitwriter ipo linker engine"
@@ -3347,11 +3348,17 @@ EOF
   llvm_ldflags=$( $llvm_config --ldflags 2> /dev/null )
   llvm_libs=$( $llvm_config --libs $llvm_components 2> /dev/null )
   if compile_prog_cxx "$llvm_cxxflags" "$llvm_libs $llvm_ldflags"; then
-    : LLVM Found
+    llvm=yes
   else
     error_exit "Compiling LLVM code is broken."
   fi
 fi
+
+##########################################
+# clang++ probe
+if test "$llvm_required" = "yes"; then
+  : #TODO
+fi  
 
 ##########################################
 # fdt probe
@@ -5403,6 +5410,11 @@ if test "$libssh2" = "yes" ; then
   echo "LIBSSH2_LIBS=$libssh2_libs" >> $config_host_mak
 fi
 
+if test "$llvm" = "yes" ; then
+  echo "CONFIG_LLVM=y" >> $config_host_mak
+  echo "LLVM_CXXFLAGS=\$(filter-out -O2 -O1 -O3 -fomit-frame-pointer -g, $llvm_cxxflags)" >> $config_host_mak
+fi 
+
 if test "$vhdx" = "yes" ; then
   echo "CONFIG_VHDX=y" >> $config_host_mak
 fi
@@ -5923,6 +5935,10 @@ fi
 
 if test "$target_linux_user" = "yes" -o "$target_bsd_user" = "yes" ; then
   ldflags="$ldflags $textseg_ldflags"
+fi
+
+if test "$llvm" = "yes" ; then
+  ldflags="$ldflags $llvm_ldflags $llvm_libs"
 fi
 
 echo "LDFLAGS+=$ldflags" >> $config_target_mak
