@@ -225,6 +225,9 @@ ifdef CONFIG_DARWIN
 	$(call quiet-command,SetFile -a C $@,"  SETFILE $(TARGET_DIR)$@")
 endif
 
+helpers.bcm: $(addprefix target-$(TARGET_BASE_ARCH)/, $(patsubst  %.o,%.bc,$(obj-helper-y)))
+	$(call LLVMLINK, $^)
+
 gdbstub-xml.c: $(TARGET_XML_FILES) $(SRC_PATH)/scripts/feature_to_c.sh
 	$(call quiet-command,rm -f $@ && $(SHELL) $(SRC_PATH)/scripts/feature_to_c.sh $@ $(TARGET_XML_FILES),"  GEN   $(TARGET_DIR)$@")
 
