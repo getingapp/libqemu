@@ -3349,10 +3349,17 @@ EOF
   llvm_cxxflags=$( $llvm_config --cxxflags 2> /dev/null )
   llvm_ldflags=$( $llvm_config --ldflags 2> /dev/null )
   llvm_libs=$( $llvm_config --libs $llvm_components 2> /dev/null )
+  llvm_link=$( $llvm_config --bindir )/llvm-link
   if compile_prog_cxx "$llvm_cxxflags" "$llvm_libs $llvm_ldflags"; then
     llvm=yes
   else
     error_exit "Compiling LLVM code is broken."
+  fi
+  if $llvm_link --version | grep LLVM 2> /dev/null 1> /dev/null ; then
+    : llvm-link is ok
+  else
+    error_exit "llvm-link does not work. Check that $llvm_config --bindir " \
+      "is pointing to a directory containing llvm-link."
   fi
 fi
 
@@ -5542,6 +5549,7 @@ echo "CC_I386=$cc_i386" >> $config_host_mak
 echo "HOST_CC=$host_cc" >> $config_host_mak
 echo "CXX=$cxx" >> $config_host_mak
 echo "CLANG=$clang" >> $config_host_mak
+echo "LLVM_LINK=$llvm_link" >> $config_host_mak
 echo "OBJCC=$objcc" >> $config_host_mak
 echo "AR=$ar" >> $config_host_mak
 echo "ARFLAGS=$ARFLAGS" >> $config_host_mak
