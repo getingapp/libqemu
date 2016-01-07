@@ -216,6 +216,7 @@ struct TranslationBlock {
        jmp_first */
     struct TranslationBlock *jmp_next[2];
     struct TranslationBlock *jmp_first;
+    void *opaque;
 };
 
 #include "qemu/thread.h"
@@ -305,7 +306,7 @@ static inline void tb_set_jmp_target(TranslationBlock *tb,
                                      int n, uintptr_t addr)
 {
     uint16_t offset = tb->tb_jmp_offset[n];
-    tb_set_jmp_target1((uintptr_t)(tb->tc_ptr + offset), addr);
+    tb_set_jmp_target1((uintptr_t)(((uint8_t *) tb->tc_ptr) + offset), addr);
 }
 
 #else

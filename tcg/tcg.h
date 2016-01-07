@@ -822,7 +822,7 @@ static inline TCGLabel *arg_label(TCGArg i)
 
 static inline ptrdiff_t tcg_ptr_byte_diff(void *a, void *b)
 {
-    return a - b;
+    return (uint8_t *)a - (uint8_t *)b;
 }
 
 /**
@@ -876,7 +876,7 @@ static inline TCGMemOpIdx make_memop_idx(TCGMemOp op, unsigned idx)
  */
 static inline TCGMemOp get_memop(TCGMemOpIdx oi)
 {
-    return oi >> 4;
+    return (TCGMemOp) (oi >> 4);
 }
 
 /**
