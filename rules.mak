@@ -131,6 +131,8 @@ modules:
 
 %.bc: %.c 
 	$(call quiet-command,$(CLANG) $(filter-out -g -Wold-style-declaration, $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS)) -c -emit-llvm -o $@ $<,"  LLVMCC    $(TARGET_DIR)$@")
+%.o: %.bcm
+	$(call quiet-command,$(OBJCOPY) --input binary --output $(BINUTILS_BINFMT) --binary-architecture $(BINUTILS_ARCH) $< $@, "  OBJCOPY   $(TARGET_DIR)$@") 	
 
 quiet-command = $(if $(V),$1,$(if $(2),@echo $2 && $1, @$1))
 

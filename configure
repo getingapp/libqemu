@@ -405,6 +405,7 @@ ar="${AR-${cross_prefix}ar}"
 as="${AS-${cross_prefix}as}"
 cpp="${CPP-$cc -E}"
 objcopy="${OBJCOPY-${cross_prefix}objcopy}"
+objdump="${OBJDUMP-${cross_prefix}objdump}"
 ld="${LD-${cross_prefix}ld}"
 libtool="${LIBTOOL-${cross_prefix}libtool}"
 nm="${NM-${cross_prefix}nm}"
@@ -3388,6 +3389,21 @@ EOF
 fi  
 
 ##########################################
+# binutils output format probe
+cat > $TMPC << EOF
+int main(void) {return 0;}
+EOF
+if compile_prog "" "" ; then
+  #TODO: get the objdump program from somewhere better
+  binutils_binfmt=$( $objdump -f $TMPE | sed "s/^.*file format \(.*\)$/\1/;t;d" )
+  binutils_arch=$( $objdump -f $TMPE | sed "s/^architecture: \([^,]*\),.*$/\1/;t;d" )
+  if test -z "$binutils_binfmt" -o -z "$binutils_arch" ; then
+    echo "WARNING: Cannot get binutils binary format and architecture. " \
+      "Building libqemu will fail."
+  fi
+fi
+
+##########################################
 # fdt probe
 # fdt support is mandatory for at least some target architectures,
 # so insist on it if we're building those system emulators.
@@ -5593,6 +5609,8 @@ if test "$gcov" = "yes" ; then
   echo "CONFIG_GCOV=y" >> $config_host_mak
   echo "GCOV=$gcov_tool" >> $config_host_mak
 fi
+echo "BINUTILS_BINFMT=$binutils_binfmt" >> $config_host_mak
+echo "BINUTILS_ARCH=$binutils_arch" >> $config_host_mak
 
 # use included Linux headers
 if test "$linux" = "yes" ; then
