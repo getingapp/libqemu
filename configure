@@ -116,6 +116,12 @@ compile_prog() {
   do_cc $QEMU_CFLAGS $local_cflags -o $TMPE $TMPC $LDFLAGS $local_ldflags
 }
 
+compile_prog_cxx() {
+  local_cxxflags="$1"
+  local_ldflags="$2"
+  do_cxx $QEMU_CXXFLAGS $local_cxxflags -o $TMPE $TMPCXX $LDFLAGS $local_ldflags
+}
+
 do_libtool() {
     local mode=$1
     shift
@@ -364,6 +370,9 @@ for opt do
   --extra-cflags=*) QEMU_CFLAGS="$QEMU_CFLAGS $optarg"
                     EXTRA_CFLAGS="$optarg"
   ;;
+  --extra-cxxflags=*) QEMU_CXXFLAGS="$QEMU_CXXFLAGS $optarg"
+                      EXTRA_CXXFLAGS="$optarg"
+  ;;
   --extra-ldflags=*) LDFLAGS="$LDFLAGS $optarg"
                      EXTRA_LDFLAGS="$optarg"
   ;;
@@ -409,6 +418,9 @@ query_pkg_config() {
 pkg_config=query_pkg_config
 sdl_config="${SDL_CONFIG-${cross_prefix}sdl-config}"
 sdl2_config="${SDL2_CONFIG-${cross_prefix}sdl2-config}"
+clang="${CLANG-clang}"
+clangxx="${CLANGXX-clang++}"
+llvm_config="${LLVM_CONFIG-llvm-config}"
 
 # If the user hasn't specified ARFLAGS, default to 'rv', just as make does.
 ARFLAGS="${ARFLAGS-rv}"
@@ -772,6 +784,10 @@ for opt do
   ;;
   --cxx=*)
   ;;
+  --clang=*) clang="$optarg"
+  ;;
+  --clangxx=*) clangxx="$optarg"
+  ;;
   --iasl=*) iasl="$optarg"
   ;;
   --objcc=*) objcc="$optarg"
@@ -787,6 +803,8 @@ for opt do
   --smbd=*) smbd="$optarg"
   ;;
   --extra-cflags=*)
+  ;;
+  --extra-cxxflags=*)
   ;;
   --extra-ldflags=*)
   ;;
@@ -1176,6 +1194,8 @@ for opt do
   --disable-jemalloc) jemalloc="no"
   ;;
   --enable-jemalloc) jemalloc="yes"
+  ;;
+  --with-llvm-config=*) llvm_config="$optarg"
   ;;
   *)
       echo "ERROR: unknown option $opt"
@@ -3291,6 +3311,46 @@ EOF
 preadv=no
 if compile_prog "" "" ; then
   preadv=yes
+fi
+
+##########################################
+# llvm probe
+# llvm is required for the libqemu targets
+llvm_required=no
+llvm_version_required="3.4"
+llvm_components="jit bitreader bitwriter ipo linker engine"
+for target in $target_list; do
+  case $target in
+    *-lib)
+      llvm_required=yes
+    ;;
+  esac
+done
+
+if test "$llvm_required" = "yes"; then
+cat > $TMPCXX << EOF
+#include <llvm/IR/LLVMContext.h>
+int main(void) { llvm::LLVMContext& c = llvm::getGlobalContext(); return &c != NULL; }
+EOF
+  llvm_version=$( $llvm_config --version 2> /dev/null )
+  if test -z "$llvm_version"; then
+    error_exit "LLVM is required for building, but no llvm-config " \
+      "executable is found. Specify one with --with-llvm-config=..."
+  fi
+
+  if test "$llvm_version" != "$llvm_version_required"; then
+    error_exit "$llvm_config points to LLVM version $llvm_version, " \
+      "but version $llvm_version_required is required. Specify a " \
+      "different llvm-config executable with --with-llvm-config=..."
+  fi
+  llvm_cxxflags=$( $llvm_config --cxxflags 2> /dev/null )
+  llvm_ldflags=$( $llvm_config --ldflags 2> /dev/null )
+  llvm_libs=$( $llvm_config --libs $llvm_components 2> /dev/null )
+  if compile_prog_cxx "$llvm_cxxflags" "$llvm_libs $llvm_ldflags"; then
+    : LLVM Found
+  else
+    error_exit "Compiling LLVM code is broken."
+  fi
 fi
 
 ##########################################
