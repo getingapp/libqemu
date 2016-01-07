@@ -691,7 +691,7 @@ int cpu_watchpoint_insert(CPUState *cpu, vaddr addr, vaddr len,
     }
     wp = g_malloc(sizeof(*wp));
 
-    wp->vaddr = addr;
+    wp->vaddress = addr;
     wp->len = len;
     wp->flags = flags;
 
@@ -716,7 +716,7 @@ int cpu_watchpoint_remove(CPUState *cpu, vaddr addr, vaddr len,
     CPUWatchpoint *wp;
 
     QTAILQ_FOREACH(wp, &cpu->watchpoints, entry) {
-        if (addr == wp->vaddr && len == wp->len
+        if (addr == wp->vaddress && len == wp->len
                 && flags == (wp->flags & ~BP_WATCHPOINT_HIT)) {
             cpu_watchpoint_remove_by_ref(cpu, wp);
             return 0;
@@ -730,7 +730,7 @@ void cpu_watchpoint_remove_by_ref(CPUState *cpu, CPUWatchpoint *watchpoint)
 {
     QTAILQ_REMOVE(&cpu->watchpoints, watchpoint, entry);
 
-    tlb_flush_page(cpu, watchpoint->vaddr);
+    tlb_flush_page(cpu, watchpoint->vaddress);
 
     g_free(watchpoint);
 }
@@ -761,10 +761,10 @@ static inline bool cpu_watchpoint_address_matches(CPUWatchpoint *wp,
      * exactly at the top of the address space and so addr + len
      * wraps round to zero.
      */
-    vaddr wpend = wp->vaddr + wp->len - 1;
+    vaddr wpend = wp->vaddress + wp->len - 1;
     vaddr addrend = addr + len - 1;
 
-    return !(addr > wpend || wp->vaddr > addrend);
+    return !(addr > wpend || wp->vaddress > addrend);
 }
 
 #endif
@@ -967,7 +967,7 @@ bool cpu_physical_memory_test_and_clear_dirty(ram_addr_t start,
 /* Called from RCU critical section */
 hwaddr memory_region_section_get_iotlb(CPUState *cpu,
                                        MemoryRegionSection *section,
-                                       target_ulong vaddr,
+                                       target_ulong vaddress,
                                        hwaddr paddr, hwaddr xlat,
                                        int prot,
                                        target_ulong *address)
@@ -995,7 +995,7 @@ hwaddr memory_region_section_get_iotlb(CPUState *cpu,
     /* Make accesses to pages with watchpoints go via the
        watchpoint trap routines.  */
     QTAILQ_FOREACH(wp, &cpu->watchpoints, entry) {
-        if (cpu_watchpoint_address_matches(wp, vaddr, TARGET_PAGE_SIZE)) {
+        if (cpu_watchpoint_address_matches(wp, vaddress, TARGET_PAGE_SIZE)) {
             /* Avoid trapping reads of pages with a write breakpoint. */
             if ((prot & PAGE_WRITE) || (wp->flags & BP_MEM_READ)) {
                 iotlb = PHYS_SECTION_WATCH + paddr;
@@ -1702,12 +1702,12 @@ void qemu_ram_remap(ram_addr_t addr, ram_addr_t length)
     RAMBlock *block;
     ram_addr_t offset;
     int flags;
-    void *area, *vaddr;
+    void *area, *vaddress;
 
     QLIST_FOREACH_RCU(block, &ram_list.blocks, next) {
         offset = addr - block->offset;
         if (offset < block->max_length) {
-            vaddr = ramblock_ptr(block, offset);
+            vaddress = ramblock_ptr(block, offset);
             if (block->flags & RAM_PREALLOC) {
                 ;
             } else if (xen_enabled()) {
@@ -1717,7 +1717,7 @@ void qemu_ram_remap(ram_addr_t addr, ram_addr_t length)
                 if (block->fd >= 0) {
                     flags |= (block->flags & RAM_SHARED ?
                               MAP_SHARED : MAP_PRIVATE);
-                    area = mmap(vaddr, length, PROT_READ | PROT_WRITE,
+                    area = mmap(vaddress, length, PROT_READ | PROT_WRITE,
                                 flags, block->fd, offset);
                 } else {
                     /*
@@ -1728,17 +1728,17 @@ void qemu_ram_remap(ram_addr_t addr, ram_addr_t length)
                     assert(phys_mem_alloc == qemu_anon_ram_alloc);
 
                     flags |= MAP_PRIVATE | MAP_ANONYMOUS;
-                    area = mmap(vaddr, length, PROT_READ | PROT_WRITE,
+                    area = mmap(vaddress, length, PROT_READ | PROT_WRITE,
                                 flags, -1, 0);
                 }
-                if (area != vaddr) {
+                if (area != vaddress) {
                     fprintf(stderr, "Could not remap addr: "
                             RAM_ADDR_FMT "@" RAM_ADDR_FMT "\n",
                             length, addr);
                     exit(1);
                 }
-                memory_try_enable_merging(vaddr, length);
-                qemu_ram_setup_dump(vaddr, length);
+                memory_try_enable_merging(vaddress, length);
+                qemu_ram_setup_dump(vaddress, length);
             }
         }
     }
@@ -1986,7 +1986,7 @@ static void check_watchpoint(int offset, int len, MemTxAttrs attrs, int flags)
     CPUState *cpu = current_cpu;
     CPUArchState *env = cpu->env_ptr;
     target_ulong pc, cs_base;
-    target_ulong vaddr;
+    target_ulong vaddress;
     CPUWatchpoint *wp;
     int cpu_flags;
 
@@ -1997,16 +1997,16 @@ static void check_watchpoint(int offset, int len, MemTxAttrs attrs, int flags)
         cpu_interrupt(cpu, CPU_INTERRUPT_DEBUG);
         return;
     }
-    vaddr = (cpu->mem_io_vaddr & TARGET_PAGE_MASK) + offset;
+    vaddress = (cpu->mem_io_vaddr & TARGET_PAGE_MASK) + offset;
     QTAILQ_FOREACH(wp, &cpu->watchpoints, entry) {
-        if (cpu_watchpoint_address_matches(wp, vaddr, len)
+        if (cpu_watchpoint_address_matches(wp, vaddress, len)
             && (wp->flags & flags)) {
             if (flags == BP_MEM_READ) {
                 wp->flags |= BP_WATCHPOINT_HIT_READ;
             } else {
                 wp->flags |= BP_WATCHPOINT_HIT_WRITE;
             }
-            wp->hitaddr = vaddr;
+            wp->hitaddr = vaddress;
             wp->hitattrs = attrs;
             if (!cpu->watchpoint_hit) {
                 cpu->watchpoint_hit = wp;

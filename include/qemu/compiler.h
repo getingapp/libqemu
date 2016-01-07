@@ -59,9 +59,14 @@
 #endif
 
 #ifndef container_of
+#ifdef __cplusplus
+#define container_of(ptr, type, member) \
+                      ((type *) ((char *)(ptr) - offsetof(type, member)))
+#else 
 #define container_of(ptr, type, member) ({                      \
         const typeof(((type *) 0)->member) *__mptr = (ptr);     \
         (type *) ((char *) __mptr - offsetof(type, member));})
+#endif
 #endif
 
 /* Convert from a base type to a parent type, with compile time checking.  */
