@@ -217,6 +217,7 @@ all-obj-$(CONFIG_SOFTMMU) += $(crypto-obj-y)
 all-obj-$(CONFIG_LIBQEMU) += helpers.o tcg-llvm.o
 
 tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS)
+tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
 
 $(QEMU_PROG_BUILD): config-devices.mak
 
