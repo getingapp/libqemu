@@ -3400,6 +3400,10 @@ if compile_prog "" "" ; then
   #TODO: get the objdump program from somewhere better
   binutils_binfmt=$( $objdump -f $TMPE | sed "s/^.*file format \(.*\)$/\1/;t;d" )
   binutils_arch=$( $objdump -f $TMPE | sed "s/^architecture: \([^,]*\),.*$/\1/;t;d" )
+  if test -z "$binutils_binfmt" -o -z "$binutils_arch" ; then
+    echo "WARNING: Cannot get binutils binary format and architecture. " \
+      "Building libqemu will fail."
+  fi
 fi
 
 ##########################################
