@@ -108,7 +108,8 @@ LLVMLINK = $(call quiet-command,$(LLVM_LINK) -o $@ $1," LLVMAR    $(TARGET_DIR)$
 
 DSO_OBJ_CFLAGS := -fPIC -DBUILD_DSO
 module-common.o: CFLAGS += $(DSO_OBJ_CFLAGS)
-%$(DSOSUF): LDFLAGS += $(LDFLAGS_SHARED)
+#Remove -pie from linker flags, as clang++ does not like it when linking shared libraries
+%$(DSOSUF): LDFLAGS := $(filter-out -pie, $(LDFLAGS)) $(LDFLAGS_SHARED)
 %$(DSOSUF): %.mo
 	$(call LINK,$^)
 	@# Copy to build root so modules can be loaded when program started without install
