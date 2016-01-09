@@ -40,7 +40,7 @@ typedef struct SyncClocks {
     int64_t realtime_clock;
 } SyncClocks;
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 /* Allow the guest to have a max 3ms advance.
  * The difference between the 2 clocks could therefore
  * oscillate around 0.

@@ -45,7 +45,7 @@ void gdb_do_syscallv(gdb_syscall_complete_cb cb, const char *fmt, va_list va);
 int use_gdb_syscalls(void);
 void gdb_set_stop_cpu(CPUState *cpu);
 void gdb_exit(CPUArchState *, int);
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 int gdb_queuesig (void);
 int gdb_handlesig(CPUState *, int);
 void gdb_signalled(CPUArchState *, int);
@@ -59,7 +59,7 @@ void gdb_register_coprocessor(CPUState *cpu,
 
 static inline int cpu_index(CPUState *cpu)
 {
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     return cpu->host_tid;
 #else
     return cpu->cpu_index + 1;
@@ -105,7 +105,7 @@ static inline int gdb_get_reg64(uint8_t *mem_buf, uint64_t val)
 
 #endif
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 int gdbserver_start(int);
 #else
 int gdbserver_start(const char *port);

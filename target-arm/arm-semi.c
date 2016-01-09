@@ -28,7 +28,7 @@
 
 #include "cpu.h"
 #include "exec/semihost.h"
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 #include "qemu.h"
 
 #define ARM_ANGEL_HEAP_SIZE (128 * 1024 * 1024)
@@ -106,7 +106,7 @@ static int open_modeflags[12] = {
     O_RDWR | O_CREAT | O_APPEND | O_BINARY
 };
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 static inline uint32_t set_swi_errno(TaskState *ts, uint32_t code)
 {
     if (code == (uint32_t)-1)
@@ -124,7 +124,7 @@ static inline uint32_t set_swi_errno(CPUARMState *env, uint32_t code)
 
 static target_ulong arm_semi_syscall_len;
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 static target_ulong syscall_err;
 #endif
 
@@ -132,13 +132,13 @@ static void arm_semi_cb(CPUState *cs, target_ulong ret, target_ulong err)
 {
     ARMCPU *cpu = ARM_CPU(cs);
     CPUARMState *env = &cpu->env;
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     TaskState *ts = cs->opaque;
 #endif
     target_ulong reg0 = is_a64(env) ? env->xregs[0] : env->regs[0];
 
     if (ret == (target_ulong)-1) {
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
         ts->swi_errno = err;
 #else
 	syscall_err = err;
@@ -199,7 +199,7 @@ static void arm_semi_flen_cb(CPUState *cs, target_ulong ret, target_ulong err)
     } else {
         env->regs[0] = size;
     }
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     ((TaskState *)cs->opaque)->swi_errno = err;
 #else
     syscall_err = err;
@@ -255,7 +255,7 @@ target_ulong do_arm_semihosting(CPUARMState *env)
     int nr;
     uint32_t ret;
     uint32_t len;
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     TaskState *ts = cs->opaque;
 #else
     CPUARMState *ts = env;
@@ -472,7 +472,7 @@ target_ulong do_arm_semihosting(CPUARMState *env)
             return ret;
         }
     case TARGET_SYS_ERRNO:
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
         return ts->swi_errno;
 #else
         return syscall_err;
@@ -497,14 +497,14 @@ target_ulong do_arm_semihosting(CPUARMState *env)
             size_t input_size;
             size_t output_size;
             int status = 0;
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
             const char *cmdline;
 #endif
             GET_ARG(0);
             GET_ARG(1);
             input_size = arg1;
             /* Compute the size of the output string.  */
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
             cmdline = semihosting_get_cmdline();
             if (cmdline == NULL) {
                 cmdline = ""; /* Default to an empty line. */
@@ -539,7 +539,7 @@ target_ulong do_arm_semihosting(CPUARMState *env)
             }
 
             /* Copy the command-line arguments.  */
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
             pstrcpy(output_buffer, output_size, cmdline);
 #else
             if (output_size == 1) {
@@ -573,7 +573,7 @@ target_ulong do_arm_semihosting(CPUARMState *env)
             uint32_t limit;
             GET_ARG(0);
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
             /* Some C libraries assume the heap immediately follows .bss, so
                allocate it using sbrk.  */
             if (!ts->heap_limit) {

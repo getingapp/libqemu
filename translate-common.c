@@ -23,7 +23,7 @@
 uintptr_t qemu_real_host_page_size;
 intptr_t qemu_real_host_page_mask;
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 /* mask must never be zero, except for A20 change call */
 static void tcg_handle_interrupt(CPUState *cpu, int mask)
 {

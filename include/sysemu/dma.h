@@ -34,7 +34,7 @@ struct QEMUSGList {
     AddressSpace *as;
 };
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 
 /*
  * When an IOMMU is present, bus addresses become distinct from
