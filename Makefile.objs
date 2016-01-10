@@ -81,10 +81,6 @@ common-obj-y += qmp-introspect.o
 common-obj-y += qmp.o hmp.o
 endif
 
-ifeq ($(CONFIG_LIBQEMU),y) 
-common-obj-y = qemu-lib.o
-endif
-
 #######################################################################
 # Target-independent parts used in system and user emulation
 common-obj-y += qemu-log.o

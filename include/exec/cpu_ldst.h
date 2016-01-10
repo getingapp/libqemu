@@ -73,6 +73,9 @@
 })
 #elif defined(CONFIG_LIBQEMU)
 #define g2h(x) ((void *)((unsigned long)(target_ulong)(x)))
+#define h2g_valid(x) 1
+#define h2g_nocheck(x) (x)
+#define h2g(x) h2g_nocheck(x)
 #endif
 
 #if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)

@@ -28,7 +28,7 @@
 /* Page tracking code uses ram addresses in system mode, and virtual
    addresses in userspace mode.  Define tb_page_addr_t to be an appropriate
    type.  */
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 typedef abi_ulong tb_page_addr_t;
 #else
 typedef ram_addr_t tb_page_addr_t;
@@ -82,7 +82,7 @@ void cpu_exec_init(CPUState *cpu, Error **errp);
 void QEMU_NORETURN cpu_loop_exit(CPUState *cpu);
 void QEMU_NORETURN cpu_loop_exit_restore(CPUState *cpu, uintptr_t pc);
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 void cpu_reloading_memory_map(void);
 void tcg_cpu_address_space_init(CPUState *cpu, AddressSpace *as);
 /* cputlb.c */
@@ -355,7 +355,7 @@ extern uintptr_t tci_tb_ptr;
 
 #define GETPC()  (GETRA() - GETPC_ADJ)
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 
 struct MemoryRegion *iotlb_to_region(CPUState *cpu,
                                      hwaddr index);
@@ -365,7 +365,7 @@ void tlb_fill(CPUState *cpu, target_ulong addr, int is_write, int mmu_idx,
 
 #endif
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 void mmap_lock(void);
 void mmap_unlock(void);
 

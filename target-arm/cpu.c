@@ -22,7 +22,7 @@
 #include "internals.h"
 #include "qemu-common.h"
 #include "hw/qdev-properties.h"
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 #include "hw/loader.h"
 #endif
 #include "hw/arm/arm.h"
@@ -146,13 +146,13 @@ static void arm_cpu_reset(CPUState *s)
         env->pc = cpu->rvbar;
 #endif
     } else {
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
         /* Userspace expects access to cp10 and cp11 for FP/Neon */
         env->cp15.cpacr_el1 = deposit64(env->cp15.cpacr_el1, 20, 4, 0xf);
 #endif
     }
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     env->uncached_cpsr = ARM_CPU_MODE_USR;
     /* For user mode we must enable access to coprocessors */
     env->vfp.xregs[ARM_VFP_FPEXC] = 1 << 30;
@@ -215,7 +215,7 @@ static void arm_cpu_reset(CPUState *s)
                               &env->vfp.standard_fp_status);
     tlb_flush(s, 1);
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     if (kvm_enabled()) {
         kvm_arm_reset_vcpu(cpu);
     }
@@ -279,7 +279,7 @@ bool arm_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
     return ret;
 }
 
-#if !defined(CONFIG_USER_ONLY) || !defined(TARGET_AARCH64)
+#if (!defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)) || !defined(TARGET_AARCH64)
 static bool arm_v7m_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 {
     CPUClass *cc = CPU_GET_CLASS(cs);
@@ -315,7 +315,7 @@ static bool arm_v7m_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 }
 #endif
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 static void arm_cpu_set_irq(void *opaque, int irq, int level)
 {
     ARMCPU *cpu = opaque;
@@ -458,7 +458,7 @@ static void arm_cpu_initfn(Object *obj)
     Aff0 = cs->cpu_index % ARM_CPUS_PER_CLUSTER;
     cpu->mp_affinity = (Aff1 << ARM_AFF1_SHIFT) | Aff0;
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     /* Our inbound IRQ and FIQ lines */
     if (kvm_enabled()) {
         /* VIRQ and VFIQ are unused with KVM but we add them to maintain
@@ -694,7 +694,7 @@ static ObjectClass *arm_cpu_class_by_name(const char *cpu_model)
 }
 
 /* CPU models. These are not needed for the AArch64 linux-user build. */
-#if !defined(CONFIG_USER_ONLY) || !defined(TARGET_AARCH64)
+#if (!defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)) || !defined(TARGET_AARCH64)
 
 static void arm926_initfn(Object *obj)
 {
@@ -905,7 +905,7 @@ static void arm_v7m_class_init(ObjectClass *oc, void *data)
 {
     CPUClass *cc = CPU_CLASS(oc);
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     cc->do_interrupt = arm_v7m_cpu_do_interrupt;
 #endif
 
@@ -1068,7 +1068,7 @@ static void cortex_a9_initfn(Object *obj)
     define_arm_cp_regs(cpu, cortexa9_cp_reginfo);
 }
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 static uint64_t a15_l2ctlr_read(CPUARMState *env, const ARMCPRegInfo *ri)
 {
     /* Linux wants the number of processors from here.
@@ -1079,7 +1079,7 @@ static uint64_t a15_l2ctlr_read(CPUARMState *env, const ARMCPRegInfo *ri)
 #endif
 
 static const ARMCPRegInfo cortexa15_cp_reginfo[] = {
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     { .name = "L2CTLR", .cp = 15, .crn = 9, .crm = 0, .opc1 = 1, .opc2 = 2,
       .access = PL1_RW, .resetvalue = 0, .readfn = a15_l2ctlr_read,
       .writefn = arm_cp_write_ignore, },
@@ -1300,7 +1300,7 @@ static void pxa270c5_initfn(Object *obj)
     cpu->reset_sctlr = 0x00000078;
 }
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 static void arm_any_initfn(Object *obj)
 {
     ARMCPU *cpu = ARM_CPU(obj);
@@ -1326,7 +1326,7 @@ typedef struct ARMCPUInfo {
 } ARMCPUInfo;
 
 static const ARMCPUInfo arm_cpus[] = {
-#if !defined(CONFIG_USER_ONLY) || !defined(TARGET_AARCH64)
+#if (!defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)) || !defined(TARGET_AARCH64)
     { .name = "arm926",      .initfn = arm926_initfn },
     { .name = "arm946",      .initfn = arm946_initfn },
     { .name = "arm1026",     .initfn = arm1026_initfn },
@@ -1362,7 +1362,7 @@ static const ARMCPUInfo arm_cpus[] = {
     { .name = "pxa270-b1",   .initfn = pxa270b1_initfn },
     { .name = "pxa270-c0",   .initfn = pxa270c0_initfn },
     { .name = "pxa270-c5",   .initfn = pxa270c5_initfn },
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     { .name = "any",         .initfn = arm_any_initfn },
 #endif
 #endif
@@ -1376,7 +1376,7 @@ static Property arm_cpu_properties[] = {
     DEFINE_PROP_END_OF_LIST()
 };
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 static int arm_cpu_handle_mmu_fault(CPUState *cs, vaddr address, int rw,
                                     int mmu_idx)
 {
@@ -1413,7 +1413,7 @@ static void arm_cpu_class_init(ObjectClass *oc, void *data)
     cc->set_pc = arm_cpu_set_pc;
     cc->gdb_read_register = arm_cpu_gdb_read_register;
     cc->gdb_write_register = arm_cpu_gdb_write_register;
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     cc->handle_mmu_fault = arm_cpu_handle_mmu_fault;
 #else
     cc->do_interrupt = arm_cpu_do_interrupt;

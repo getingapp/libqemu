@@ -465,7 +465,7 @@ typedef struct CPUARMState {
     uint64_t exclusive_addr;
     uint64_t exclusive_val;
     uint64_t exclusive_high;
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     uint64_t exclusive_test;
     uint32_t exclusive_info;
 #endif
@@ -481,7 +481,7 @@ typedef struct CPUARMState {
     /* For mixed endian mode.  */
     bool bswap_code;
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     /* For usermode syscall translation.  */
     int eabi;
 #endif
@@ -919,7 +919,7 @@ static inline int arm_feature(CPUARMState *env, int feature)
     return (env->features & (1ULL << feature)) != 0;
 }
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 /* Return true if exception levels below EL3 are in secure state,
  * or would be following an exception return to that level.
  * Unlike arm_is_secure() (which is always a question about the
@@ -1503,7 +1503,7 @@ bool write_cpustate_to_list(ARMCPU *cpu);
 #define ARM_CPUID_TI915T      0x54029152
 #define ARM_CPUID_TI925T      0x54029252
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 #define TARGET_PAGE_BITS 12
 #else
 /* The ARM MMU allows 1k pages.  */

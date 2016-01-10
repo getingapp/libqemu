@@ -26,7 +26,7 @@
 #include "cpu.h"
 #include "tcg.h"
 #include "hw/hw.h"
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 #include "hw/boards.h"
 #endif
 #include "hw/qdev.h"
@@ -40,7 +40,7 @@
 #include "exec/memory.h"
 #include "sysemu/dma.h"
 #include "exec/address-spaces.h"
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 #include <qemu.h>
 #else /* !CONFIG_USER_ONLY */
 #include "sysemu/xen-mapcache.h"
@@ -62,7 +62,7 @@
 
 //#define DEBUG_SUBPAGE
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 /* ram_list is read under rcu_read_lock()/rcu_read_unlock().  Writes
  * are protected by the ramlist lock.
  */
@@ -102,7 +102,7 @@ __thread CPUState *current_cpu;
    2 = Adaptive rate instruction counting.  */
 int use_icount;
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 
 typedef struct PhysPageEntry PhysPageEntry;
 
@@ -182,7 +182,7 @@ struct CPUAddressSpace {
 
 #endif
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 
 static void phys_map_node_reserve(PhysPageMap *map, unsigned nodes)
 {
@@ -458,7 +458,7 @@ address_space_translate_for_iotlb(CPUState *cpu, hwaddr addr,
 }
 #endif
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 
 static int cpu_common_post_load(void *opaque, int version_id)
 {
@@ -550,7 +550,7 @@ CPUState *qemu_get_cpu(int index)
     return NULL;
 }
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 void tcg_cpu_address_space_init(CPUState *cpu, AddressSpace *as)
 {
     /* We only support one address space per cpu at the moment.  */
@@ -569,7 +569,7 @@ void tcg_cpu_address_space_init(CPUState *cpu, AddressSpace *as)
 }
 #endif
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 static DECLARE_BITMAP(cpu_index_map, MAX_CPUMASK_BITS);
 
 static int cpu_get_free_index(Error **errp)
@@ -654,7 +654,7 @@ void cpu_exec_init(CPUState *cpu, Error **errp)
     }
 }
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 static void breakpoint_invalidate(CPUState *cpu, target_ulong pc)
 {
     tb_invalidate_phys_page_range(pc, pc + 1, 0);
@@ -895,7 +895,7 @@ void cpu_abort(CPUState *cpu, const char *fmt, ...)
     abort();
 }
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 /* Called from RCU critical section */
 static RAMBlock *qemu_get_ram_block(ram_addr_t addr)
 {
@@ -1024,7 +1024,7 @@ hwaddr memory_region_section_get_iotlb(CPUState *cpu,
 }
 #endif /* defined(CONFIG_USER_ONLY) */
 
-#if !defined(CONFIG_USER_ONLY)
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 
 static int subpage_register (subpage_t *mmio, uint32_t start, uint32_t end,
                              uint16_t section);
@@ -2400,7 +2400,7 @@ MemoryRegion *get_system_io(void)
 #endif /* !defined(CONFIG_USER_ONLY) */
 
 /* physical memory access (slow version, mainly for debug) */
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 int cpu_memory_rw_debug(CPUState *cpu, target_ulong addr,
                         uint8_t *buf, int len, int is_write)
 {
@@ -3583,7 +3583,7 @@ bool target_words_bigendian(void)
 #endif
 }
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 bool cpu_physical_memory_is_io(hwaddr phys_addr)
 {
     MemoryRegion*mr;

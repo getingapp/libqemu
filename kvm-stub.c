@@ -15,7 +15,7 @@
 #include "cpu.h"
 #include "sysemu/kvm.h"
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 #include "hw/pci/msi.h"
 #endif
 
@@ -110,7 +110,7 @@ int kvm_on_sigbus(int code, void *addr)
     return 1;
 }
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 int kvm_irqchip_add_msi_route(KVMState *s, MSIMessage msg, PCIDevice *dev)
 {
     return -ENOSYS;

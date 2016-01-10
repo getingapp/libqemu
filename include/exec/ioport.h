@@ -45,7 +45,7 @@ typedef struct MemoryRegionPortio {
 
 #define PORTIO_END_OF_LIST() { }
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 extern const MemoryRegionOps unassigned_io_ops;
 #endif
 

@@ -14,7 +14,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 
 #define DIRTY_MEMORY_VGA       0
 #define DIRTY_MEMORY_CODE      1
@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "exec/cpu-common.h"
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 #include "exec/hwaddr.h"
 #endif
 #include "exec/memattrs.h"

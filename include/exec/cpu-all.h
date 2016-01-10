@@ -153,7 +153,7 @@ static inline void tswap64s(uint64_t *s)
 
 /* MMU memory access macros */
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 #include <assert.h>
 #include "exec/user/abitypes.h"
 
@@ -200,7 +200,7 @@ extern intptr_t qemu_host_page_mask;
 #define PAGE_RESERVED  0x0020
 #endif
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 void page_dump(FILE *f);
 
 typedef int (*walk_memory_regions_fn)(void *, target_ulong,
