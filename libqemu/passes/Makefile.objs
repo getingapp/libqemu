@@ -1,1 +1,1 @@
-obj-y = CpuArchStructInfo.o
+obj-y = CpuArchStructInfo.o SanitizeEnv.o
