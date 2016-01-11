@@ -18,7 +18,7 @@
  */
 #include "config.h"
 #include "qemu-common.h"
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -42,7 +42,7 @@
 #include "sysemu/kvm.h"
 #include "exec/semihost.h"
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 #define GDB_ATTACHED "0"
 #else
 #define GDB_ATTACHED "1"
@@ -71,7 +71,7 @@ enum {
     GDB_SIGNAL_UNKNOWN = 143
 };
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 
 /* Map target signal numbers to GDB protocol signal numbers and vice
  * versa.  For user emulation's currently supported systems, we can
@@ -256,7 +256,7 @@ static int gdb_signal_table[] = {
 };
 #endif
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 static int target_signal_to_gdb (int sig)
 {
     int i;
@@ -304,7 +304,7 @@ typedef struct GDBState {
     uint8_t last_packet[MAX_PACKET_LENGTH + 4];
     int last_packet_len;
     int signal;
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     int fd;
     int running_state;
 #else
@@ -324,7 +324,7 @@ static GDBState *gdbserver_state;
 
 bool gdb_has_xml;
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 /* XXX: This is not thread safe.  Do we care?  */
 static int gdbserver_fd = -1;
 
@@ -382,7 +382,7 @@ int use_gdb_syscalls(void)
 /* Resume execution.  */
 static inline void gdb_continue(GDBState *s)
 {
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     s->running_state = 1;
 #else
     if (!runstate_needs_reset()) {
@@ -393,7 +393,7 @@ static inline void gdb_continue(GDBState *s)
 
 static void put_buffer(GDBState *s, const uint8_t *buf, int len)
 {
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     int ret;
 
     while (len > 0) {
@@ -476,7 +476,7 @@ static int put_packet_binary(GDBState *s, const char *buf, int len)
         s->last_packet_len = p - s->last_packet;
         put_buffer(s, (uint8_t *)s->last_packet, s->last_packet_len);
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
         i = get_char(s);
         if (i < 0)
             return -1;
@@ -641,7 +641,7 @@ void gdb_register_coprocessor(CPUState *cpu,
     }
 }
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 /* Translate GDB watchpoint type to a flags value for cpu_watchpoint_* */
 static inline int xlat_gdb_type(CPUState *cpu, int gdbtype)
 {
@@ -680,7 +680,7 @@ static int gdb_breakpoint_insert(target_ulong addr, target_ulong len, int type)
             }
         }
         return err;
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     case GDB_WATCHPOINT_WRITE:
     case GDB_WATCHPOINT_READ:
     case GDB_WATCHPOINT_ACCESS:
@@ -717,7 +717,7 @@ static int gdb_breakpoint_remove(target_ulong addr, target_ulong len, int type)
             }
         }
         return err;
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     case GDB_WATCHPOINT_WRITE:
     case GDB_WATCHPOINT_READ:
     case GDB_WATCHPOINT_ACCESS:
@@ -745,7 +745,7 @@ static void gdb_breakpoint_remove_all(void)
 
     CPU_FOREACH(cpu) {
         cpu_breakpoint_remove_all(cpu, BP_GDB);
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
         cpu_watchpoint_remove_all(cpu, BP_GDB);
 #endif
     }
@@ -1129,7 +1129,7 @@ static int gdb_handle_packet(GDBState *s, const char *line_buf)
             }
             break;
         }
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
         else if (strcmp(p, "Offsets") == 0) {
             TaskState *ts = s->c_cpu->opaque;
 
@@ -1233,7 +1233,7 @@ void gdb_set_stop_cpu(CPUState *cpu)
     gdbserver_state->g_cpu = cpu;
 }
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
 static void gdb_vm_state_change(void *opaque, int running, RunState state)
 {
     GDBState *s = gdbserver_state;
@@ -1327,7 +1327,7 @@ void gdb_do_syscallv(gdb_syscall_complete_cb cb, const char *fmt, va_list va)
     if (!s)
         return;
     s->current_syscall_cb = cb;
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     vm_stop(RUN_STATE_DEBUG);
 #endif
     p = s->syscall_buf;
@@ -1363,7 +1363,7 @@ void gdb_do_syscallv(gdb_syscall_complete_cb cb, const char *fmt, va_list va)
         }
     }
     *p = 0;
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
     put_packet(s, s->syscall_buf);
     gdb_handlesig(s->c_cpu, 0);
 #else
@@ -1391,7 +1391,7 @@ static void gdb_read_byte(GDBState *s, int ch)
     int i, csum;
     uint8_t reply;
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
     if (s->last_packet_len) {
         /* Waiting for a response to the last packet.  If we see the start
            of a new command then abandon the previous response.  */
@@ -1472,7 +1472,7 @@ void gdb_exit(CPUArchState *env, int code)
   if (!s) {
       return;
   }
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
   if (gdbserver_fd < 0 || s->fd < 0) {
       return;
   }
@@ -1485,12 +1485,12 @@ void gdb_exit(CPUArchState *env, int code)
   snprintf(buf, sizeof(buf), "W%02x", (uint8_t)code);
   put_packet(s, buf);
 
-#ifndef CONFIG_USER_ONLY
+#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
   qemu_chr_delete(s->chr);
 #endif
 }
 
-#ifdef CONFIG_USER_ONLY
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 int
 gdb_queuesig (void)
 {

@@ -1,0 +1,1 @@
+obj-y = stubs.o uaccess.o qemu-lib.o mmap.o

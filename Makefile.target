@@ -169,7 +169,10 @@ ifdef CONFIG_LIBQEMU
 
 QEMU_CFLAGS+=-I$(SRC_PATH)/libqemu  
 obj-y += libqemu/
-obj-y += gdbstub.o
+obj-y += gdbstub.o helpers.o tcg-llvm.o 
+
+tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS)
+tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
 
 endif # CONFIG_LIBQEMU
 
@@ -200,10 +203,7 @@ all-obj-y += $(qom-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(block-obj-y)
 all-obj-$(CONFIG_USER_ONLY) += $(crypto-aes-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(crypto-obj-y)
-all-obj-$(CONFIG_LIBQEMU) += helpers.o tcg-llvm.o
-
-tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS)
-tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
+all-obj-$(CONFIG_LIBQEMU) += $(crypto-aes-obj-y)
 
 $(QEMU_PROG_BUILD): config-devices.mak
 

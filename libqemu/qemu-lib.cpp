@@ -1,13 +1,26 @@
 #include <libqemu/qemu-lib.h>
 
+
+
 extern "C" {
 #include "qemu-common.h"
 #include <exec/cpu-common.h>
 #include <sysemu/cpus.h>
 #include <qemu/main-loop.h>
 #include <qemu/error-report.h>
+#include <qemu.h>
 //#include <hw/boards.h>
+
+//extern int singlestep;
+//extern unsigned long mmap_min_addr;
+//extern THREAD CPUState *thread_cpu;
+//extern unsigned long reserved_va;
 }
+
+int singlestep;
+unsigned long mmap_min_addr;
+THREAD CPUState *thread_cpu;
+unsigned long reserved_va;
 
 int libqemu_init(void)
 {
