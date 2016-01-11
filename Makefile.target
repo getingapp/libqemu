@@ -176,6 +176,7 @@ tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
 
 libqemu/qemu-lib.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) $(LLVM_CFLAGS)
 libqemu/qemu-lib.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
+libqemu/passes/CpuArchStructInfo.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) -std=c++11
 
 endif # CONFIG_LIBQEMU
 
