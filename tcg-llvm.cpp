@@ -197,7 +197,7 @@ private:
      * for mem-based globals, store base value index */
     int m_globalsIdx[TCG_MAX_TEMPS];
 
-    std::vector<BasicBlock*>  m_labels;
+    std::map<TCGLabel *, BasicBlock*>  m_labels;
 
 public:
     TCGLLVMContextPrivate();
@@ -274,8 +274,8 @@ public:
 
     void initializeHelpers();
 
-    BasicBlock* getLabel(int idx);
-    void delLabel(int idx);
+    BasicBlock* getLabel(TCGLabel *lbl);
+    void delLabel(TCGLabel *lbl);
     void startNewBasicBlock(BasicBlock *bb = NULL);
 
     /* Code generation */
@@ -649,24 +649,25 @@ void TCGLLVMContextPrivate::initGlobalsAndLocalTemps()
     }
 }
 
-inline BasicBlock* TCGLLVMContextPrivate::getLabel(int idx)
+inline BasicBlock* TCGLLVMContextPrivate::getLabel(TCGLabel *lbl)
 {
-    if(!m_labels[idx]) {
+    if(m_labels.find(lbl) == m_labels.end()) {
         std::ostringstream bbName;
-        bbName << "label_" << idx;
-        m_labels[idx] = BasicBlock::Create(m_context, bbName.str());
+        bbName << "label_" << lbl->id;
+        m_labels.insert(std::make_pair(lbl, BasicBlock::Create(m_context, bbName.str())));
     }
-    return m_labels[idx];
+
+    return m_labels[lbl];
 }
 
-inline void TCGLLVMContextPrivate::delLabel(int idx)
+inline void TCGLLVMContextPrivate::delLabel(TCGLabel *lbl)
 {
     /* XXX
     if(m_labels[idx] && m_labels[idx]->use_empty() &&
             !m_labels[idx]->getParent())
         delete m_labels[idx];
     */
-    m_labels[idx] = NULL;
+    m_labels.erase(lbl);
 }
 
 void TCGLLVMContextPrivate::startNewBasicBlock(BasicBlock *bb)
@@ -732,18 +733,6 @@ inline Value* TCGLLVMContextPrivate::generateQemuMemOp(bool ld,
             ConstantInt::get(wordType(), helperFunc),
             helperFunctionPtrTy);
     return m_builder.CreateCall(funcAddr, ArrayRef<Value*>(argValues));
-#if defined (CONFIG_S2E)
-    } else {
-        if(ld) {
-            return m_builder.CreateCall2(m_qemu_ld_helpers[bits>>4], addr,
-                        ConstantInt::get(intType(8*sizeof(int)), mem_index));
-        } else {
-            m_builder.CreateCall3(m_qemu_st_helpers[bits>>4], addr, value,
-                        ConstantInt::get(intType(8*sizeof(int)), mem_index));
-            return NULL;
-        }
-    }
-#endif //CONFIG_S2E
 #else //CONFIG_LLVM
 #error CONFIG_LLVM must be active if CONFIG_SOFTMMU is active to compile memory operations generation as
 #endif //CONFIG_LLVM
@@ -824,6 +813,8 @@ int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
     int nb_args = def.nb_args;
 
     switch(opc) {
+    case INDEX_op_insn_start:
+        break;
 
     /* predefined ops */
     case INDEX_op_discard:
@@ -915,7 +906,7 @@ int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
         break;
 
     case INDEX_op_br:
-        m_builder.CreateBr(getLabel(args[0]));
+        m_builder.CreateBr(getLabel(arg_label(args[0])));
         startNewBasicBlock();
         break;
 
@@ -944,7 +935,7 @@ int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
                 tcg_abort();                                        \
         }                                                           \
         BasicBlock* bb = BasicBlock::Create(m_context);             \
-        m_builder.CreateCondBr(v, getLabel(args[3]), bb);           \
+        m_builder.CreateCondBr(v, getLabel(arg_label(args[3])), bb);           \
         startNewBasicBlock(bb);                                     \
     } break;
 
@@ -958,8 +949,8 @@ int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
 #undef __OP_BRCOND
 
     case INDEX_op_set_label:
-        assert(getLabel(args[0])->getParent() == 0);
-        startNewBasicBlock(getLabel(args[0]));
+        assert(getLabel(arg_label(args[0]))->getParent() == 0);
+        startNewBasicBlock(getLabel(arg_label(args[0])));
         break;
 
     case INDEX_op_movi_i32:

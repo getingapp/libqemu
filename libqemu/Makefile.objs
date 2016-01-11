@@ -1,1 +1,1 @@
-obj-y = stubs.o uaccess.o mmap.o
+obj-y = stubs.o uaccess.o mmap.o qemu-lib.o

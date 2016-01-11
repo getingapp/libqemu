@@ -68,8 +68,6 @@ extern "C" {
 //void tcg_llvm_tb_alloc(struct TranslationBlock *tb);
 //void tcg_llvm_tb_free(struct TranslationBlock *tb);
 
-//void tcg_llvm_gen_code(struct TCGLLVMContext *l, struct TCGContext *s,
-//                       struct TranslationBlock *tb);
 //const char* tcg_llvm_get_func_name(struct TranslationBlock *tb);
 //
 //uintptr_t tcg_llvm_qemu_tb_exec(CPUArchState *env, TranslationBlock *tb);
@@ -114,11 +112,6 @@ public:
     void deleteExecutionEngine();
     llvm::legacy::FunctionPassManager* getFunctionPassManager() const;
 
-#ifdef CONFIG_S2E
-    /** Called after linking all helper libraries */
-    void initializeHelpers();
-#endif
-
     void generateCode(struct TCGContext *s,
                       struct TranslationBlock *tb);
 };
@@ -130,6 +123,9 @@ struct TCGPluginTBData
     uint8_t * llvm_tc_end;
     TCGLLVMContext *tcg_llvm_context;
 };
+
+TCGLLVMContext* tcg_llvm_initialize(void);
+void tcg_llvm_gen_code(TCGLLVMContext *l, TCGContext *s, TranslationBlock *tb);
 
 #endif
 
