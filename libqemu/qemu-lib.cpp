@@ -1,5 +1,6 @@
 
 
+#include <llvm/Support/raw_ostream.h>
 
 extern "C" {
 #include "qemu-common.h"
@@ -149,9 +150,12 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t cs_base, uint64
                      max_cycles | CF_NOCACHE
                          | (ignore_icount ? CF_IGNORE_ICOUNT : 0));
     tb->orig_tb = NULL;
+//    tcg_dump_ops(&tcg_ctx);
 
     tcg_llvm_gen_code(tcg_llvm_ctx, &tcg_ctx, tb);
     function = static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function;
+
+    llvm::errs() << *function << '\n';
     /* TODO: Generate LLVM here */
     tb_phys_invalidate(tb, -1);
     tb_free(tb);
