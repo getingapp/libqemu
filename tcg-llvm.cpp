@@ -174,6 +174,7 @@ public:
     ExecutionEngine *m_executionEngine;
 private:
     llvm::Type *m_cpuArchStructPtrType;
+    std::unique_ptr<StructInfo> m_cpuArchStructInfo;
     /* Function pass manager (used for optimizing the code) */
     FunctionPassManager *m_functionPassManager;
 
@@ -202,6 +203,14 @@ private:
     int m_globalsIdx[TCG_MAX_TEMPS];
 
     std::map<TCGLabel *, BasicBlock*>  m_labels;
+
+    void replaceEnvInstructionsWith(
+        llvm::Value *newEnv,
+        llvm::Value *oldEnv,
+        llvm::Value *envUse,
+        int offset,
+        std::list<llvm::Instruction *>& eraseList);
+    void replaceEnv(llvm::Function &f);
 
 public:
     TCGLLVMContextPrivate();
@@ -403,8 +412,8 @@ TCGLLVMContextPrivate::TCGLLVMContextPrivate()
             smerror,
             m_context);
 
-    m_cpuArchStructPtrType = m_module->getGlobalVariable("cpuarchstate_type_anchor", false)->getType();
-//    std::unique_ptr<StructInfo> cpuArchStructInfo(StructInfo::getFromGlobalPointer(m_module, "cpuarchstruct_type_anchor"));
+    m_cpuArchStructPtrType = m_module->getGlobalVariable("cpu_type_anchor", false)->getType();
+    m_cpuArchStructInfo = StructInfo::getFromGlobalPointer(m_module, "cpu_type_anchor");
 
 //    m_module = new Module("tcg-llvm", m_context);
 
@@ -1399,11 +1408,8 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
     */
     FunctionType *tbFunctionType = FunctionType::get(
         wordType(),
-        std::vector<llvm::Type*>(1, m_cpuArchStructPtrType), false);
+        std::vector<llvm::Type*>(1, dyn_cast<llvm::PointerType>(m_cpuArchStructPtrType)->getElementType()), false);
 
-//    FunctionType *tbFunctionType = FunctionType::get(
-//            wordType(),
-//            std::vector<llvm::Type*>(1, intPtrType(64)), false);
     m_tbFunction = Function::Create(tbFunctionType,
             Function::PrivateLinkage, fName.str(), m_module);
     BasicBlock *basicBlock = BasicBlock::Create(m_context,
@@ -1481,6 +1487,8 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
         static_cast<TCGPluginTBData *>(tb->opaque)->llvm_tc_end = 0;
     }
 
+    replaceEnv(*m_tbFunction);
+
 //    std::string fcnString;
 //    raw_string_ostream ss(fcnString);
 
@@ -1505,6 +1513,183 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
         qemu_log_flush();
     } */
 }
+
+
+void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
+        llvm::Value *newEnv,
+        llvm::Value *oldEnv,
+        llvm::Value *envUse,
+        int offset,
+        std::list<llvm::Instruction *>& eraseList)
+{
+    //Data flows through binary operations
+    if (llvm::BinaryOperator *binOp = dyn_cast<llvm::BinaryOperator>(envUse)) {
+        llvm::ConstantInt *op = dyn_cast<llvm::ConstantInt>(binOp->getOperand(1));
+        if (!op)  {
+            op = dyn_cast<ConstantInt>(binOp->getOperand(0));
+            assert(op); //One of the operands has to be constant
+        }
+
+        switch (binOp->getOpcode())  {
+            case llvm::BinaryOperator::Add: offset += op->getSExtValue(); break;
+            case llvm::BinaryOperator::Sub: offset -= op->getSExtValue(); break;
+            default: assert(false); //This operator not implemented yet
+        }
+
+        for ( Value::use_iterator useI = binOp->use_begin(), useE = binOp->use_end(); useI != useE; ++useI )
+        {
+            replaceEnvInstructionsWith(newEnv, binOp, *useI, offset, eraseList);
+        }
+
+        eraseList.push_back(binOp);
+    }
+    //Data flows through cast instruction
+    else if (llvm::CastInst *cast = dyn_cast<llvm::CastInst>(envUse)) {
+        //Cast does not change the offset, just recurse
+        for ( Value::use_iterator useI = cast->use_begin(), useE = cast->use_end(); useI != useE; ++useI )
+        {
+            replaceEnvInstructionsWith(newEnv, cast, *useI, offset, eraseList);
+        }
+
+        eraseList.push_back(cast);
+    }
+    //Load instructions are a dataflow sink
+    else if (llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(envUse)) {
+        llvm::SmallVector<unsigned, 10> indices;
+        if (!m_cpuArchStructInfo->findMember(offset, indices)) {
+            llvm::errs() << "Error finding member at offset " << offset << '\n';
+            exit(1);
+        }
+        std::string memberName = m_cpuArchStructInfo->getMemberName(indices);
+
+        llvm::SmallVector<Value *, 11> gepIndices;
+        gepIndices.push_back(ConstantInt::get(llvm::Type::getInt32Ty(newEnv->getContext()), 0));
+        for (unsigned index : indices) {
+            gepIndices.push_back(ConstantInt::get(llvm::Type::getInt32Ty(newEnv->getContext()), index));
+        }
+
+        llvm::GetElementPtrInst *gep = llvm::GetElementPtrInst::Create(newEnv, gepIndices, memberName + "_ptr", load);
+        llvm::LoadInst *newLoad = new llvm::LoadInst(gep, memberName, load);
+        if (newLoad->getType()->isPointerTy())  {
+            llvm::CastInst *cast = llvm::CastInst::CreatePointerCast(newLoad, load->getType(), memberName, load);
+            load->replaceAllUsesWith(cast);
+        }
+        else {
+            assert(newLoad->getType() == load->getType()); //Replacement needs to have the same type as previous value
+            load->replaceAllUsesWith(newLoad);
+        }
+
+        LLVMContext& ctx = newLoad->getContext();
+        newLoad->setMetadata("tcg-llvm.env_access.indices", llvm::MDNode::get(ctx, gepIndices));
+        newLoad->setMetadata("tcg-llvm.env_access.member_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, memberName)));
+
+        eraseList.push_back(load);
+    }
+    //Store instructions are a dataflow sink
+    else if (llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(envUse)) {
+        llvm::SmallVector<unsigned, 10> indices;
+        if (!m_cpuArchStructInfo->findMember(offset, indices)) {
+            llvm::errs() << "Error finding member at offset " << offset << '\n';
+            exit(1);
+        }
+        std::string memberName = m_cpuArchStructInfo->getMemberName(indices);
+
+        llvm::SmallVector<Value *, 11> gepIndices;
+        gepIndices.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(newEnv->getContext()), 0));
+        for (unsigned index : indices) {
+            gepIndices.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(newEnv->getContext()), index));
+        }
+
+        llvm::GetElementPtrInst *gep = llvm::GetElementPtrInst::Create(newEnv, gepIndices, memberName + "_ptr", store);
+        llvm::Value *storeValue = store->getValueOperand();
+        if (gep->getType()->getElementType()->isPointerTy())  {
+            storeValue = new llvm::IntToPtrInst(storeValue, gep->getType()->getElementType(), storeValue->getName(), store);
+        }
+        llvm::StoreInst *newStore = new llvm::StoreInst(storeValue, gep, store);
+
+        llvm::LLVMContext& ctx = newStore->getContext();
+        newStore->setMetadata("tcg-llvm.env_access.indices", llvm::MDNode::get(ctx, gepIndices));
+        newStore->setMetadata("tcg-llvm.env_access.member_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, memberName)));
+
+        eraseList.push_back(store);
+    }
+    //Call instructions are a dataflow sink
+    else if (llvm::CallInst *call = dyn_cast<llvm::CallInst>(envUse)) {
+        for ( unsigned i = 0; i < call->getNumArgOperands(); ++i )
+        {
+            llvm::Value *op = call->getArgOperand(i);
+            if (op == oldEnv)  {
+                llvm::CastInst *cast = llvm::CastInst::CreatePointerCast(newEnv, op->getType(), op->getName(), call);
+                call->setArgOperand(i, cast);
+                break;
+            }
+        }
+    }
+    else {
+        llvm::errs() << "Don't know how to handle " << *envUse << '\n';
+        assert(false);
+    }
+}
+
+void TCGLLVMContextPrivate::replaceEnv(Function &f)
+{
+    std::list<llvm::Instruction *> eraseList;
+
+    llvm::Argument *envPtr = f.arg_begin();
+
+    for ( llvm::GlobalVariable::use_iterator useI = envPtr->use_begin(), useE = envPtr->use_end(); useI != useE; ++useI )
+    {
+        //Go over first gep and load of env pointer
+        llvm::GetElementPtrInst *gep = dyn_cast<llvm::GetElementPtrInst>(*useI);
+        if (!gep || gep->getNumIndices() != 1 || gep->getNumUses() != 1) {
+            assert(false);
+            continue;
+        }
+        llvm::ConstantInt *idx = dyn_cast<llvm::ConstantInt>(gep->idx_begin());
+        if (!idx || idx->getZExtValue() != 0) {
+            assert(false);
+            continue;
+        }
+
+        llvm::CastInst *cast = dyn_cast<llvm::CastInst>(*gep->use_begin());
+        if (!cast || cast->getNumUses() != 1) {
+            assert(false);
+            continue;
+        }
+        llvm::LoadInst *loadInst = dyn_cast<llvm::LoadInst>(*cast->use_begin());
+        if (!loadInst) {
+            assert(false);
+            continue;
+        }
+
+        //Now replace following uses
+        std::list<llvm::Instruction *> uses;
+        for ( llvm::Instruction::use_iterator useI2 = loadInst->use_begin(), useE2 = loadInst->use_end(); useI2 != useE2; ++useI2 )
+        {
+            llvm::Instruction *useInst = dyn_cast<llvm::Instruction>(*useI2);
+            if (!useInst) {
+                assert(useInst && "Use is not an instruction");
+                continue;
+            }
+            uses.push_back(useInst);
+        }
+
+        for ( llvm::Instruction *useInst : uses )
+        {
+            replaceEnvInstructionsWith(envPtr, loadInst, useInst, 0, eraseList);
+        }
+
+        eraseList.push_back(loadInst);
+        eraseList.push_back(cast);
+        eraseList.push_back(gep);
+    }
+
+    for ( llvm::Instruction *inst : eraseList )
+    {
+        inst->eraseFromParent();
+    }
+}
+
 
 /***********************************/
 /* External interface for C++ code */
