@@ -1,5 +1,5 @@
 /*
- *  User-only accessor function support
+ *  Libqemu accessor function support
  *
  * Generate inline load/store functions for one data size.
  *
@@ -7,7 +7,7 @@
  *
  * Not used directly but included from cpu_ldst.h.
  *
- *  Copyright (c) 2015 Linaro Limited
+ *  Copyright (c) 2015 Jonas Zaddach
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -53,7 +53,7 @@
 static inline RES_TYPE
 glue(glue(cpu_ld, USUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr)
 {
-    return glue(glue(ld, USUFFIX), _p)(g2h(ptr));
+    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, false, IS_CODE_ACCESS);
 }
 
 static inline RES_TYPE
@@ -61,14 +61,14 @@ glue(glue(glue(cpu_ld, USUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
                                                   target_ulong ptr,
                                                   uintptr_t retaddr)
 {
-    return glue(glue(cpu_ld, USUFFIX), MEMSUFFIX)(env, ptr);
+    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, false, IS_CODE_ACCESS);
 }
 
 #if DATA_SIZE <= 2
 static inline int
 glue(glue(cpu_lds, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr)
 {
-    return glue(glue(lds, SUFFIX), _p)(g2h(ptr));
+    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS);
 }
 
 static inline int
@@ -76,7 +76,7 @@ glue(glue(glue(cpu_lds, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
                                                   target_ulong ptr,
                                                   uintptr_t retaddr)
 {
-    return glue(glue(cpu_lds, SUFFIX), MEMSUFFIX)(env, ptr);
+    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS);
 }
 #endif
 
@@ -85,7 +85,7 @@ static inline void
 glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr,
                                       RES_TYPE v)
 {
-    glue(glue(st, SUFFIX), _p)(g2h(ptr), v);
+    libqemu_st(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS, v);
 }
 
 static inline void
@@ -94,7 +94,7 @@ glue(glue(glue(cpu_st, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
                                                   RES_TYPE v,
                                                   uintptr_t retaddr)
 {
-    glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(env, ptr, v);
+    libqemu_st(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS, v);
 }
 #endif
 
