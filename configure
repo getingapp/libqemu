@@ -3347,6 +3347,11 @@ cat > $TMPCXX << EOF
 #endif
 int main(void) { llvm::LLVMContext& c = llvm::getGlobalContext(); return &c != NULL; }
 EOF
+
+cat > $TMPC << EOF
+#include <llvm-c/Core.h>
+int main(void) { return 0; }
+EOF
   llvm_version=$( $llvm_config --version 2> /dev/null | cut -d. -f1,2 )
   if test -z "$llvm_version"; then
     error_exit "LLVM is required for building, but no llvm-config " \
@@ -3358,6 +3363,7 @@ EOF
       "but version $llvm_version_major_required.$llvm_version_minor_required is required. Specify a " \
       "different llvm-config executable with --with-llvm-config=..."
   fi
+  llvm_cflags=$( $llvm_config --cflags 2> /dev/null )
   llvm_cxxflags=$( $llvm_config --cxxflags 2> /dev/null )
   llvm_ldflags=$( $llvm_config --ldflags 2> /dev/null )
   llvm_libs=$( $llvm_config --libs $llvm_components 2> /dev/null )
@@ -3372,6 +3378,23 @@ EOF
   else
     error_exit "llvm-link does not work. Check that $llvm_config --bindir " \
       "is pointing to a directory containing llvm-link."
+  fi
+
+  if compile_prog "$llvm_cflags" "$llvm_libs $llvm_ldflags" ; then
+    : C program compilation works
+  else
+    #This might be Ubuntu where the header files are located in a directory not pointed to by llvm-config
+    if test -d "/usr/include/llvm-c-${llvm_version_major_required}.${llvm_version_minor_required}/llvm-c" ; then
+      llvm_cflags="${llvm_cflags} -I/usr/include/llvm-c-${llvm_version_major_required}.${llvm_version_minor_required}/llvm-c"
+      if compile_prog "$llvm_cflags" "$llvm_libs $llvm_ldflags" ; then
+        : C program compilation works with fixed path
+      else
+        echo "WARNING: Cannot find llvm-c include directory. Compiling libqemu will fail."
+        exit 1
+      fi
+    else
+      echo "WARNING: Cannot find llvm-c include directory. Compiling libqemu will fail."
+    fi
   fi
 fi
 
@@ -5474,6 +5497,7 @@ fi
 if test "$llvm" = "yes" ; then
   echo "CONFIG_LLVM=y" >> $config_host_mak
   echo "LLVM_CXXFLAGS=\$(filter-out -O2 -O1 -O3 -fomit-frame-pointer -g, $llvm_cxxflags)" >> $config_host_mak
+  echo "LLVM_CFLAGS=\$(filter-out -O2 -O1 -O3 -fomit-frame-pointer -g, $llvm_cflags)" >> $config_host_mak
 fi 
 
 if test "$vhdx" = "yes" ; then
