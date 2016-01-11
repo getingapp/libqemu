@@ -123,6 +123,10 @@ int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_han
        the real value of GUEST_BASE into account.  */
     tcg_prologue_init(&tcg_ctx);
     tcg_llvm_ctx = tcg_llvm_initialize();
+    
+    qemu_set_log_filename("/tmp/qemu.log");
+    
+    qemu_set_log(qemu_str_to_log_mask("in_asm,op"));
     return 0;
 }
 
@@ -132,12 +136,27 @@ LLVMModuleRef libqemu_get_module(void)
     return NULL;
 }
 
-LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t cs_base, uint64_t flags, bool single_inst)
+/* Allocate a new translation block. Flush the translation buffer if
+   too many translation blocks or too much generated code. */
+static TranslationBlock *tb_alloc(target_ulong pc)
+{
+    TranslationBlock *tb;
+
+    if (tcg_ctx.tb_ctx.nb_tbs >= tcg_ctx.code_gen_max_blocks) {
+        return NULL;
+    }
+    tb = &tcg_ctx.tb_ctx.tbs[tcg_ctx.tb_ctx.nb_tbs++];
+    tb->pc = pc;
+    tb->cflags = 0;
+    return tb;
+}
+
+LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t flags, uint64_t cflags, bool single_inst)
 {
     TranslationBlock *tb;
     int max_cycles = CF_COUNT_MASK;
-    bool ignore_icount = true;
     llvm::Function *function;
+    tcg_insn_unit *gen_code_buf;
 
     singlestep = single_inst;
 
@@ -146,18 +165,34 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t cs_base, uint64
     if (max_cycles > CF_COUNT_MASK)
         max_cycles = CF_COUNT_MASK;
 
-    tb = tb_gen_code(thread_cpu, pc, cs_base, flags,
-                     max_cycles | CF_NOCACHE
-                         | (ignore_icount ? CF_IGNORE_ICOUNT : 0));
-    tb->orig_tb = NULL;
-//    tcg_dump_ops(&tcg_ctx);
+    
+    tb = tb_alloc(pc);
+    if (unlikely(!tb)) {
+        /* flush must be done */
+        tb_flush(thread_cpu);
+        /* cannot fail at this point */
+        tb = tb_alloc(pc);
+        assert(tb != NULL);
+        /* Don't forget to invalidate previous TB info.  */
+        tcg_ctx.tb_ctx.tb_invalidated_flag = 1;
+    }
+
+    gen_code_buf = (tcg_insn_unit *) tcg_ctx.code_gen_ptr;
+    tb->tc_ptr = gen_code_buf;
+    tb->cs_base = 0;
+    tb->flags = flags;
+    tb->cflags = cflags;
+    tcg_func_start(&tcg_ctx);
+
+    gen_intermediate_code(env, tb);
+
+    tcg_dump_ops(&tcg_ctx);
 
     tcg_llvm_gen_code(tcg_llvm_ctx, &tcg_ctx, tb);
     function = static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function;
 
     llvm::errs() << *function << '\n';
     /* TODO: Generate LLVM here */
-    tb_phys_invalidate(tb, -1);
     tb_free(tb);
     return NULL;
 }

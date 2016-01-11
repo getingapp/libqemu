@@ -653,7 +653,7 @@ inline BasicBlock* TCGLLVMContextPrivate::getLabel(TCGLabel *lbl)
 {
     if(m_labels.find(lbl) == m_labels.end()) {
         std::ostringstream bbName;
-        bbName << "label_" << reinterpret_cast<unsigned long>(lbl);
+        bbName << "label_" << lbl->id;
         m_labels.insert(std::make_pair(lbl, BasicBlock::Create(m_context, bbName.str())));
     }
 
