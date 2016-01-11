@@ -33,10 +33,10 @@ private:
 
 
 
-  struct S2ECpuArchStructInfoPass : public llvm::ModulePass {
+  struct CpuArchStructInfoPass : public llvm::ModulePass {
     static char ID;
 
-    S2ECpuArchStructInfoPass();
+    CpuArchStructInfoPass();
 
     virtual bool runOnModule(llvm::Module &mod);
 	virtual void getAnalysisUsage(llvm::AnalysisUsage& usage) const;

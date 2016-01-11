@@ -19,8 +19,8 @@
 
 using namespace llvm;
 
-char S2ECpuArchStructInfoPass::ID = 0;
-static RegisterPass<S2ECpuArchStructInfoPass> X("cpuarchstructinfo", "Get information about the CPUArchStruct", false, true);
+char CpuArchStructInfoPass::ID = 0;
+static RegisterPass<CpuArchStructInfoPass> X("cpuarchstructinfo", "Get information about the CPUArchStruct", false, true);
 static DITypeIdentifierMap typeIdentifierMap;
 
 static StructInfo* getCpuArchStructInfo(Module *module)
@@ -200,23 +200,23 @@ llvm::Type* StructInfo::getMemberType(ArrayRef<unsigned> indices)
 }
 
 
-S2ECpuArchStructInfoPass::S2ECpuArchStructInfoPass() :
+CpuArchStructInfoPass::CpuArchStructInfoPass() :
         llvm::ModulePass(ID),
         m_cpuArchStructInfo(nullptr)
 {
 }
 
-bool S2ECpuArchStructInfoPass::runOnModule(Module &mod)
+bool CpuArchStructInfoPass::runOnModule(Module &mod)
 {
     m_cpuArchStructInfo = getCpuArchStructInfo(&mod);
     return false;
 }
 
-void S2ECpuArchStructInfoPass::getAnalysisUsage(AnalysisUsage& usage) const {
+void CpuArchStructInfoPass::getAnalysisUsage(AnalysisUsage& usage) const {
 	usage.setPreservesAll();
 }
 
-bool S2ECpuArchStructInfoPass::findMember(unsigned offset, llvm::SmallVectorImpl<unsigned>& indices) {
+bool CpuArchStructInfoPass::findMember(unsigned offset, llvm::SmallVectorImpl<unsigned>& indices) {
     auto itr = m_cachedOffsetLookups.find(offset);
     if (itr != m_cachedOffsetLookups.end()) {
         for ( unsigned index : itr->second ) {
@@ -237,7 +237,7 @@ bool S2ECpuArchStructInfoPass::findMember(unsigned offset, llvm::SmallVectorImpl
     return false;
 }
 
-bool S2ECpuArchStructInfoPass::findMember(llvm::StringRef name, llvm::SmallVectorImpl<unsigned>& indices) {
+bool CpuArchStructInfoPass::findMember(llvm::StringRef name, llvm::SmallVectorImpl<unsigned>& indices) {
     auto itr = m_cachedNameLookups.find(name);
     if (itr != m_cachedNameLookups.end()) {
         for ( unsigned index : itr->second ) {
