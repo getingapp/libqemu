@@ -78,7 +78,47 @@
 #define h2g(x) h2g_nocheck(x)
 #endif
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+
+#if defined(CONFIG_LIBQEMU)
+#include <libqemu/qemu-lib.h>
+
+/* In user-only mode we provide only the _code and _data accessors. */
+
+#define MEMSUFFIX _data
+#define IS_CODE_ACCESS false
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef MEMSUFFIX
+#undef IS_CODE_ACCESS
+
+#define MEMSUFFIX _code
+#define CODE_ACCESS
+#define IS_CODE_ACCESS true
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef MEMSUFFIX
+#undef CODE_ACCESS
+#undef IS_CODE_ACCESS
+
+#elif defined(CONFIG_USER_ONLY) 
 
 /* In user-only mode we provide only the _code and _data accessors. */
 
