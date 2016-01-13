@@ -1,4 +1,4 @@
-#include "CpuArchStructInfo.h"
+#include "libqemu/passes/CpuArchStructInfo.h"
 
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"
@@ -23,9 +23,70 @@ char CpuArchStructInfoPass::ID = 0;
 static RegisterPass<CpuArchStructInfoPass> X("cpuarchstructinfo", "Get information about the CPUArchStruct", false, true);
 static DITypeIdentifierMap typeIdentifierMap;
 
-static StructInfo* getCpuArchStructInfo(Module *module)
+std::unique_ptr<StructInfo> StructInfo::getFromGlobalPointer(Module *module, llvm::StringRef name)
 {
-    GlobalVariable *env = module->getGlobalVariable("env", false);
+    GlobalVariable *var = module->getGlobalVariable(name, false);
+    if (!var || !var->getType() || !var->getType()->isPointerTy()) {
+        assert(false);
+        return nullptr;
+    }
+    PointerType *varDeref = dyn_cast<PointerType>(var->getType()->getElementType());
+    if (!varDeref || !varDeref->getElementType() || !varDeref->getElementType()->isStructTy()) 
+    {
+        assert(false);
+        return nullptr;
+    }
+
+    StructType *structType = dyn_cast<StructType>(varDeref->getElementType());
+    if (!structType) {
+        assert(false);
+        return nullptr;
+    }
+
+    NamedMDNode *mdCuNodes = module->getNamedMetadata("llvm.dbg.cu");
+    if (!mdCuNodes) {
+        assert(false);
+        return nullptr;
+    }
+
+    std::shared_ptr<DITypeIdentifierMap> typeIdentifierMap(new DITypeIdentifierMap(generateDITypeIdentifierMap(mdCuNodes)));
+    DICompositeType *diStructType = nullptr;
+    for ( unsigned i = 0; i < mdCuNodes->getNumOperands() && !diStructType; ++i )
+    {
+        DICompileUnit diCu(mdCuNodes->getOperand(i));
+
+        for ( unsigned j = 0; j < diCu.getGlobalVariables().getNumElements(); ++j )
+        {
+            DIGlobalVariable diGlobalVar(diCu.getGlobalVariables().getElement(j));
+            if (diGlobalVar.getName() != name)  {
+                continue;
+            }
+
+            if (!diGlobalVar.getType().isDerivedType()) {
+                assert(false);
+                return nullptr;
+            }
+            DIDerivedType diEnvPtrType(diGlobalVar.getType());
+            if (!diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap).isCompositeType()) {
+                assert(false);
+                return nullptr;
+            }
+            return std::unique_ptr<StructInfo>(new StructInfo(
+                module, 
+                structType, 
+                new DICompositeType(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap)), 
+                typeIdentifierMap));
+        }
+    }
+
+    assert(false);
+    return nullptr;
+
+}
+
+static std::unique_ptr<StructInfo> getCpuArchStructInfo(Module *module)
+{
+    GlobalVariable *env = module->getGlobalVariable("cpuarchstruct_type_anchor", false);
     assert(env);
     assert(env->getType() && env->getType()->isPointerTy());
     assert(env->getType()->getElementType() && env->getType()->getElementType()->isPointerTy());
@@ -40,7 +101,7 @@ static StructInfo* getCpuArchStructInfo(Module *module)
         return nullptr;
     }
     
-    DITypeIdentifierMap *typeIdentifierMap = new DITypeIdentifierMap(generateDITypeIdentifierMap(mdCuNodes));
+    std::shared_ptr<DITypeIdentifierMap> typeIdentifierMap(new DITypeIdentifierMap(generateDITypeIdentifierMap(mdCuNodes)));
      
 
     DICompositeType *diStructType = nullptr;
@@ -51,14 +112,14 @@ static StructInfo* getCpuArchStructInfo(Module *module)
         for ( unsigned j = 0; j < diCu.getGlobalVariables().getNumElements(); ++j )
         {
             DIGlobalVariable diGlobalVar(diCu.getGlobalVariables().getElement(j));
-            if (diGlobalVar.getName() != "env")  {
+            if (diGlobalVar.getName() != "cpuarchstruct_type_anchor")  {
                 continue;
             }
 
             assert(diGlobalVar.getType().isDerivedType());
             DIDerivedType diEnvPtrType(diGlobalVar.getType());
             assert(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap).isCompositeType());
-            return new StructInfo(module, structType, new DICompositeType(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap)), typeIdentifierMap);
+            return std::unique_ptr<StructInfo>(new StructInfo(module, structType, new DICompositeType(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap)), typeIdentifierMap));
         }
     }
 
@@ -66,7 +127,7 @@ static StructInfo* getCpuArchStructInfo(Module *module)
     return nullptr;
 }
 
-StructInfo::StructInfo(Module *module, StructType *structType, DICompositeType *diStructType, DITypeIdentifierMap *typeIdentifierMap) :
+StructInfo::StructInfo(Module *module, StructType *structType, DICompositeType *diStructType, std::shared_ptr<DITypeIdentifierMap> typeIdentifierMap) :
         m_module(module),
         m_dataLayout(module),
         m_structType(structType),

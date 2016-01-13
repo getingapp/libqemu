@@ -171,7 +171,7 @@ QEMU_CFLAGS+=-I$(SRC_PATH)/libqemu
 obj-y += libqemu/
 obj-y += gdbstub.o helpers.o  
 
-tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS)
+tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) -std=c++11
 tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
 
 libqemu/qemu-lib.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) $(LLVM_CFLAGS)
@@ -222,7 +222,7 @@ ifdef CONFIG_DARWIN
 	$(call quiet-command,SetFile -a C $@,"  SETFILE $(TARGET_DIR)$@")
 endif
 
-helpers.bcm: $(addprefix target-$(TARGET_BASE_ARCH)/, $(patsubst  %.o,%.bc,$(obj-helper-y)))
+helpers.bcm: $(addprefix target-$(TARGET_BASE_ARCH)/, $(patsubst  %.o,%.bc,$(obj-helper-y))) libqemu/cpuarchstate_type_anchor.bc
 	$(call LLVMLINK, $^)
 
 gdbstub-xml.c: $(TARGET_XML_FILES) $(SRC_PATH)/scripts/feature_to_c.sh

@@ -3329,7 +3329,7 @@ llvm_version_major_required=3
 llvm_version_minor_required=4
 
 llvm_required=no
-llvm_components="jit bitreader bitwriter ipo linker engine"
+llvm_components="jit bitreader bitwriter ipo linker engine irreader"
 for target in $target_list; do
   case $target in
     *-lib)
