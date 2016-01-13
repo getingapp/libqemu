@@ -7,6 +7,7 @@
 #include "llvm/DebugInfo.h"
 
 #include <unordered_map>
+#include <memory>
 
 namespace llvm {
     class DICompositeType;
@@ -15,7 +16,8 @@ namespace llvm {
 class StructInfo
 {
 public:
-    StructInfo(llvm::Module *module, llvm::StructType *structType, llvm::DICompositeType *diStructType = nullptr, llvm::DITypeIdentifierMap *typeIdentifierMap = nullptr);
+    StructInfo(llvm::Module *module, llvm::StructType *structType, llvm::DICompositeType *diStructType = nullptr, std::shared_ptr<llvm::DITypeIdentifierMap> typeIdentifierMap = nullptr);
+    static std::unique_ptr<StructInfo> getFromGlobalPointer(llvm::Module *module, llvm::StringRef name);
     bool findMember(unsigned offset, llvm::SmallVectorImpl<unsigned>& indices);
     bool findMember(llvm::StringRef name, llvm::SmallVectorImpl<unsigned>& indices);
     std::string getMemberName(llvm::ArrayRef<unsigned> indices);
@@ -28,7 +30,7 @@ private:
     llvm::DataLayout m_dataLayout;
     llvm::StructType *m_structType;
     llvm::DICompositeType *m_debugInfoStructType;
-    llvm::DITypeIdentifierMap *m_typeIdentifierMap;
+    std::shared_ptr<llvm::DITypeIdentifierMap> m_typeIdentifierMap;
 };
 
 
@@ -64,7 +66,7 @@ private:
 	    return m_cpuArchStructInfo->getName();
 	}
   private:
-	StructInfo *m_cpuArchStructInfo;
+	std::unique_ptr<StructInfo> m_cpuArchStructInfo;
 	std::unordered_map<std::string, llvm::SmallVector<unsigned, 10> > m_cachedNameLookups;
 	std::unordered_map<unsigned, llvm::SmallVector<unsigned, 10> > m_cachedOffsetLookups;
 

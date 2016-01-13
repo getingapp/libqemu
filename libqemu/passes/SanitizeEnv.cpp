@@ -1,5 +1,5 @@
 #include "SanitizeEnv.h"
-#include "CpuArchStructInfo.h"
+#include "libqemu/passes/CpuArchStructInfo.h"
 
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"

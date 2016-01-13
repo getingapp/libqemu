@@ -34,7 +34,7 @@
  */
 
 
-//#include "tcgplugin/cxx11-compat.h"
+#include "libqemu/cxx11-compat.h"
 
 extern "C" {
 #include "tcg.h"
@@ -42,6 +42,7 @@ extern "C" {
 }
 
 #include <libqemu/tcg-llvm.h>
+#include <libqemu/passes/CpuArchStructInfo.h>
 
 extern "C" {
 #include "config.h"
@@ -400,6 +401,8 @@ TCGLLVMContextPrivate::TCGLLVMContextPrivate()
             StringRef(&_binary_helpers_bcm_start, &_binary_helpers_bcm_end - &_binary_helpers_bcm_start)),
             smerror,
             m_context);
+
+    std::unique_ptr<StructInfo> cpuArchStructInfo(StructInfo::getFromGlobalPointer(m_module, "cpuarchstruct_type_anchor"));
 
 //    m_module = new Module("tcg-llvm", m_context);
 

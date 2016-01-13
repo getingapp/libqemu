@@ -130,8 +130,10 @@ modules:
 %.a:
 	$(call quiet-command,rm -f $@ && $(AR) rcs $@ $^,"  AR    $(TARGET_DIR)$@")
 
+#Building debug version (-g) of bitcode files is important, as we need the DWARF debug info
+#to do introspection.
 %.bc: %.c 
-	$(call quiet-command,$(CLANG) $(filter-out -g -Wold-style-declaration, $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS)) -c -emit-llvm -o $@ $<,"  LLVMCC    $(TARGET_DIR)$@")
+	$(call quiet-command,$(CLANG) $(filter-out -g -Wold-style-declaration, $(QEMU_INCLUDES) $(QEMU_CFLAGS) $(QEMU_DGFLAGS) $(CFLAGS)) -g -c -emit-llvm -o $@ $<,"  LLVMCC    $(TARGET_DIR)$@")
 %.o: %.bcm
 	$(call quiet-command,$(OBJCOPY) --input binary --output $(BINUTILS_BINFMT) --binary-architecture $(BINUTILS_ARCH) $< $@, "  OBJCOPY   $(TARGET_DIR)$@") 	
 

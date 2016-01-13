@@ -171,7 +171,7 @@ QEMU_CFLAGS+=-I$(SRC_PATH)/libqemu
 obj-y += libqemu/
 obj-y += gdbstub.o helpers.o tcg-llvm.o 
 
-tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS)
+tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) -std=c++11
 tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
 
 libqemu/qemu-lib.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) $(LLVM_CFLAGS)
