@@ -90,6 +90,8 @@ extern "C" {
 
 #include <llvm/Support/DynamicLibrary.h>
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/SourceMgr.h>
+#include <llvm/IRReader/IRReader.h>
 
 #include <iostream>
 #include <sstream>
@@ -379,6 +381,9 @@ public:
     unsigned GetNumStubSlabs() { return m_base->GetNumStubSlabs(); }
 };
 
+extern const char _binary_helpers_bcm_start;
+extern const char _binary_helpers_bcm_end;
+
 TCGLLVMContextPrivate::TCGLLVMContextPrivate()
     : m_context(getGlobalContext()), m_builder(m_context), m_tbCount(0),
       m_tcgContext(NULL), m_tbFunction(NULL)
@@ -389,7 +394,14 @@ TCGLLVMContextPrivate::TCGLLVMContextPrivate()
 
     InitializeNativeTarget();
 
-    m_module = new Module("tcg-llvm", m_context);
+    llvm::SMDiagnostic smerror;
+    m_module = llvm::ParseIR( 
+        llvm::MemoryBuffer::getMemBuffer( 
+            StringRef(&_binary_helpers_bcm_start, &_binary_helpers_bcm_end - &_binary_helpers_bcm_start)),
+            smerror,
+            m_context);
+
+//    m_module = new Module("tcg-llvm", m_context);
 
     m_jitMemoryManager = new TJITMemoryManager();
 
