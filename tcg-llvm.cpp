@@ -173,6 +173,7 @@ private:
 public:
     ExecutionEngine *m_executionEngine;
 private:
+    llvm::Type *m_cpuArchStructPtrType;
     /* Function pass manager (used for optimizing the code) */
     FunctionPassManager *m_functionPassManager;
 
@@ -402,7 +403,8 @@ TCGLLVMContextPrivate::TCGLLVMContextPrivate()
             smerror,
             m_context);
 
-    std::unique_ptr<StructInfo> cpuArchStructInfo(StructInfo::getFromGlobalPointer(m_module, "cpuarchstruct_type_anchor"));
+    m_cpuArchStructPtrType = m_module->getGlobalVariable("cpuarchstate_type_anchor", false)->getType();
+//    std::unique_ptr<StructInfo> cpuArchStructInfo(StructInfo::getFromGlobalPointer(m_module, "cpuarchstruct_type_anchor"));
 
 //    m_module = new Module("tcg-llvm", m_context);
 
@@ -1395,10 +1397,13 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
     if(m_tbFunction)
         m_tbFunction->eraseFromParent();
     */
-
     FunctionType *tbFunctionType = FunctionType::get(
-            wordType(),
-            std::vector<llvm::Type*>(1, intPtrType(64)), false);
+        wordType(),
+        std::vector<llvm::Type*>(1, m_cpuArchStructPtrType), false);
+
+//    FunctionType *tbFunctionType = FunctionType::get(
+//            wordType(),
+//            std::vector<llvm::Type*>(1, intPtrType(64)), false);
     m_tbFunction = Function::Create(tbFunctionType,
             Function::PrivateLinkage, fName.str(), m_module);
     BasicBlock *basicBlock = BasicBlock::Create(m_context,
