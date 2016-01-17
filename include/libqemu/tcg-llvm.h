@@ -37,6 +37,7 @@
 #define TCG_LLVM_H
 
 #include <inttypes.h>
+#include <list>
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,6 +84,8 @@ extern "C" {
 
 namespace llvm {
     class Function;
+    class Value;
+    class Instruction;
     class LLVMContext;
     class Module;
     class ModuleProvider;
