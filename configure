@@ -3344,7 +3344,7 @@ cat > $TMPC << EOF
 #include <llvm-c/Core.h>
 int main(void) { return 0; }
 EOF
-  llvm_version=$( $llvm_config --version 2> /dev/null )
+  llvm_version=$( $llvm_config --version 2> /dev/null | cut -d. -f1,2 )
   if test -z "$llvm_version"; then
     error_exit "LLVM is required for building, but no llvm-config " \
       "executable is found. Specify one with --with-llvm-config=..."
@@ -3352,7 +3352,7 @@ EOF
 
   if test "$llvm_version" != "${llvm_version_major_required}.${llvm_version_minor_required}"; then
     error_exit "$llvm_config points to LLVM version $llvm_version, " \
-      "but version $llvm_version_required is required. Specify a " \
+      "but version $llvm_version_major_required.$llvm_version_minor_required is required. Specify a " \
       "different llvm-config executable with --with-llvm-config=..."
   fi
   llvm_cflags=$( $llvm_config --cflags 2> /dev/null )
