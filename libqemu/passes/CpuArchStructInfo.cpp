@@ -16,6 +16,11 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <libqemu/cxx11-compat.h>
+
+extern "C" {
+#include "cpu.h"
+}
 
 using namespace llvm;
 
@@ -28,24 +33,28 @@ std::unique_ptr<StructInfo> StructInfo::getFromGlobalPointer(Module *module, llv
     GlobalVariable *var = module->getGlobalVariable(name, false);
     if (!var || !var->getType() || !var->getType()->isPointerTy()) {
         assert(false);
+        llvm::errs() << "StructInfo: Cannot get global variable " << name << ", or it is not a pointer." << '\n';
         return nullptr;
     }
     PointerType *varDeref = dyn_cast<PointerType>(var->getType()->getElementType());
-    if (!varDeref || !varDeref->getElementType() || !varDeref->getElementType()->isStructTy()) 
+    if (!varDeref || !varDeref->getElementType()) 
     {
         assert(false);
+        llvm::errs() << "StructInfo: Pointer not valid." << '\n';
         return nullptr;
     }
 
     StructType *structType = dyn_cast<StructType>(varDeref->getElementType());
     if (!structType) {
         assert(false);
+        llvm::errs() << "StructInfo: Cannot get struct type." << '\n';
         return nullptr;
     }
 
     NamedMDNode *mdCuNodes = module->getNamedMetadata("llvm.dbg.cu");
     if (!mdCuNodes) {
         assert(false);
+        llvm::errs() << "StructInfo: Cannot find metadata." << '\n';
         return nullptr;
     }
 
@@ -62,24 +71,28 @@ std::unique_ptr<StructInfo> StructInfo::getFromGlobalPointer(Module *module, llv
                 continue;
             }
 
-            if (!diGlobalVar.getType().isDerivedType()) {
+            //Go through pointers until we reach a structure
+            DIType diStructType(diGlobalVar.getType());
+            while (diStructType.isDerivedType() && !diStructType.isCompositeType()) {
+                diStructType = std::unique_ptr<DIDerivedType>(new DIDerivedType(diStructType))->getTypeDerivedFrom().resolve(*typeIdentifierMap);
+            }
+
+            if (!diStructType.isCompositeType()) {
+                llvm::errs() << "StructInfo: Global variable " << name << " does not point to a composite type: " << diStructType.getName() << '\n';
                 assert(false);
                 return nullptr;
             }
-            DIDerivedType diEnvPtrType(diGlobalVar.getType());
-            if (!diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap).isCompositeType()) {
-                assert(false);
-                return nullptr;
-            }
+
             return std::unique_ptr<StructInfo>(new StructInfo(
                 module, 
                 structType, 
-                new DICompositeType(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap)), 
+                new DICompositeType(diStructType), 
                 typeIdentifierMap));
         }
     }
 
     assert(false);
+    llvm::errs() << "StructInfo: Did not find global variable " << name << " in debug information." << '\n';
     return nullptr;
 
 }
@@ -118,7 +131,7 @@ static std::unique_ptr<StructInfo> getCpuArchStructInfo(Module *module)
 
             assert(diGlobalVar.getType().isDerivedType());
             DIDerivedType diEnvPtrType(diGlobalVar.getType());
-            assert(diEnvPtrType.getTypeDerivedFrom().isCompositeType());
+            assert(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap).isCompositeType());
             return std::unique_ptr<StructInfo>(new StructInfo(module, structType, new DICompositeType(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap)), typeIdentifierMap));
         }
     }
@@ -136,13 +149,16 @@ StructInfo::StructInfo(Module *module, StructType *structType, DICompositeType *
 {
 }
 
-bool StructInfo::findMember(unsigned offset, SmallVectorImpl<unsigned>& indices)
+bool StructInfo::findMember(int offset, SmallVectorImpl<unsigned>& indices)
 {
-    Type *curType = m_structType;
+   llvm::Type *curType = m_structType;
 
-    while (offset != 0)
+    offset += ENV_OFFSET;
+
+    bool foundType;
+    do
     {
-        bool foundType = false;
+        foundType = false;
 
         if (StructType *structType = dyn_cast<StructType>(curType)) {
             StructLayout const *layout = m_dataLayout.getStructLayout(structType);
@@ -162,11 +178,11 @@ bool StructInfo::findMember(unsigned offset, SmallVectorImpl<unsigned>& indices)
             indices.push_back(index);
             foundType = true;
         }
+    } while (foundType);
 
-        if (!foundType) {
-            assert(false && "Offset pointing in the middle of a basic data type");
-            return false;
-        }
+    if (offset != 0) {
+        assert(false && "Offset pointing in the middle of a basic data type");
+        return false;
     }
 
     return true;
@@ -204,7 +220,7 @@ std::string StructInfo::getMemberName(ArrayRef<unsigned> indices)
         return "<no name>";
     }
 
-    Type *curType = m_structType;
+    llvm::Type *curType = m_structType;
     DIType diType = *m_debugInfoStructType;
     std::stringstream ss;
 
@@ -213,7 +229,14 @@ std::string StructInfo::getMemberName(ArrayRef<unsigned> indices)
     for (unsigned index : indices)
     {
         if (StructType *structType = dyn_cast<StructType>(curType)) {
-            assert(diType.isCompositeType());
+            if (diType.isDerivedType() && !diType.isCompositeType()) {
+                diType = DIDerivedType(diType).getTypeDerivedFrom().resolve(*m_typeIdentifierMap); 
+            }
+            if (!diType.isCompositeType()) {
+                llvm::errs() << "ERROR: C type is a StructType, but DWARF debug information is not a composite type." << '\n';
+                assert(false);
+                exit(1);
+            }
             DICompositeType diCompositeType(diType);
             DIDerivedType diMemberType(diCompositeType.getTypeArray().getElement(index));
 
@@ -241,7 +264,7 @@ std::string StructInfo::getMemberName(ArrayRef<unsigned> indices)
 
 llvm::Type* StructInfo::getMemberType(ArrayRef<unsigned> indices)
 {
-    Type *curType = m_structType;
+    llvm::Type *curType = m_structType;
 
     for (unsigned index : indices)
     {

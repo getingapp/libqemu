@@ -18,7 +18,7 @@ class StructInfo
 public:
     StructInfo(llvm::Module *module, llvm::StructType *structType, llvm::DICompositeType *diStructType = nullptr, std::shared_ptr<llvm::DITypeIdentifierMap> typeIdentifierMap = nullptr);
     static std::unique_ptr<StructInfo> getFromGlobalPointer(llvm::Module *module, llvm::StringRef name);
-    bool findMember(unsigned offset, llvm::SmallVectorImpl<unsigned>& indices);
+    bool findMember(int offset, llvm::SmallVectorImpl<unsigned>& indices);
     bool findMember(llvm::StringRef name, llvm::SmallVectorImpl<unsigned>& indices);
     std::string getMemberName(llvm::ArrayRef<unsigned> indices);
     llvm::Type *getMemberType(llvm::ArrayRef<unsigned> indices);
