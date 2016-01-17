@@ -192,7 +192,7 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t flags, uint64_t
     tcg_llvm_gen_code(tcg_llvm_ctx, &tcg_ctx, tb);
     function = static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function;
 
-    if (!llvm::verifyModule(*function->getParent())) {
+    if (llvm::verifyFunction(*function, llvm::AbortProcessAction)) {
         llvm::errs() << "Failed to verify module" << '\n';
     }
 
