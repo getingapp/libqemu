@@ -211,6 +211,7 @@ private:
         int offset,
         std::list<llvm::Instruction *>& eraseList);
     void replaceEnv(llvm::Function &f);
+    void replaceEntryBB(llvm::Function &f);
 
 public:
     TCGLLVMContextPrivate();
@@ -1488,6 +1489,8 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
     }
 
     replaceEnv(*m_tbFunction);
+    replaceEntryBB(*m_tbFunction);
+    
 
 //    std::string fcnString;
 //    raw_string_ostream ss(fcnString);
@@ -1512,6 +1515,15 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
         qemu_log("\n");
         qemu_log_flush();
     } */
+}
+
+void TCGLLVMContextPrivate::replaceEntryBB(llvm::Function &f)
+{
+    llvm::BasicBlock *bb = f.begin();
+    llvm::BranchInst *branch = dyn_cast<llvm::BranchInst>(bb->getTerminator());
+    assert(branch);
+    branch->getSuccessor(0)->eraseFromParent();
+    bb->eraseFromParent();
 }
 
 
