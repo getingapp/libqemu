@@ -15,6 +15,7 @@ extern "C" {
 }
 #include <libqemu/qemu-lib-external.h>
 #include <llvm/IR/Function.h>
+#include <llvm/Analysis/Verifier.h>
 #include <libqemu/tcg-llvm.h>
 
 int singlestep;
@@ -190,6 +191,10 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t flags, uint64_t
 
     tcg_llvm_gen_code(tcg_llvm_ctx, &tcg_ctx, tb);
     function = static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function;
+
+    if (!llvm::verifyModule(*function->getParent())) {
+        llvm::errs() << "Failed to verify module" << '\n';
+    }
 
     llvm::errs() << *function << '\n';
     /* TODO: Generate LLVM here */
