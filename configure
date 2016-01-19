@@ -116,6 +116,12 @@ compile_prog() {
   do_cc $QEMU_CFLAGS $local_cflags -o $TMPE $TMPC $LDFLAGS $local_ldflags
 }
 
+compile_prog_cxx() {
+  local_cxxflags="$1"
+  local_ldflags="$2"
+  do_cxx $QEMU_CXXFLAGS $local_cxxflags -o $TMPE $TMPCXX $LDFLAGS $local_ldflags
+}
+
 do_libtool() {
     local mode=$1
     shift
@@ -362,6 +368,9 @@ for opt do
   ;;
   --extra-cflags=*) QEMU_CFLAGS="$QEMU_CFLAGS $optarg"
                     EXTRA_CFLAGS="$optarg"
+  ;;
+  --extra-cxxflags=*) QEMU_CXXFLAGS="$QEMU_CXXFLAGS $optarg"
+                      EXTRA_CXXFLAGS="$optarg"
   ;;
   --extra-ldflags=*) LDFLAGS="$LDFLAGS $optarg"
                      EXTRA_LDFLAGS="$optarg"
@@ -783,6 +792,8 @@ for opt do
   --smbd=*) smbd="$optarg"
   ;;
   --extra-cflags=*)
+  ;;
+  --extra-cxxflags=*)
   ;;
   --extra-ldflags=*)
   ;;
