@@ -128,7 +128,7 @@ static TranslationBlock *tb_alloc(target_ulong pc)
     return tb;
 }
 
-LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t flags, uint64_t cflags, bool single_inst)
+LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst)
 {
     TranslationBlock *tb;
     int max_cycles = CF_COUNT_MASK;
@@ -157,8 +157,8 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, uint64_t flags, uint64_t
     gen_code_buf = (tcg_insn_unit *) tcg_ctx.code_gen_ptr;
     tb->tc_ptr = gen_code_buf;
     tb->cs_base = 0;
-    tb->flags = flags;
-    tb->cflags = cflags;
+    tb->flags = flags._value;
+    tb->cflags = CF_COUNT_MASK | CF_NOCACHE | CF_IGNORE_ICOUNT;
     tcg_func_start(&tcg_ctx);
 
     gen_intermediate_code(env, tb);
