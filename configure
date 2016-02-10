@@ -3440,6 +3440,25 @@ if compile_prog "" "" ; then
 fi
 
 ##########################################
+# Check if build breaks with 'register' storage
+# specifier in c++11. This happens in a glib
+# header.
+
+cat > $TMPCXX << EOF
+int main(void) {register int x = 0; return x;}
+EOF
+if compile_prog_cxx "-std=c++11 -Werror" ""; then
+  : Compile ok, nothing to do
+else
+  if compile_prog_cxx "-std=c++11 -Werror -Wno-deprecated-register" ""; then
+    EXTRA_CXXFLAGS="${EXTRA_CXXFLAGS} -Wno-deprecated-register"
+  else
+    echo "WARNING: Cannot build code containing 'register' storage specifier with -std=c++11." \
+      "Building will fail due to glib headers."
+  fi
+fi
+
+##########################################
 # fdt probe
 # fdt support is mandatory for at least some target architectures,
 # so insist on it if we're building those system emulators.
@@ -4889,6 +4908,7 @@ echo "ARFLAGS           $ARFLAGS"
 echo "CFLAGS            $CFLAGS"
 echo "QEMU_CFLAGS       $QEMU_CFLAGS"
 echo "LDFLAGS           $LDFLAGS"
+echo "EXTRA_CXXFLAGS    $EXTRA_CXXFLAGS"
 echo "make              $make"
 echo "install           $install"
 echo "python            $python"
@@ -5616,6 +5636,7 @@ echo "LIBTOOL=$libtool" >> $config_host_mak
 echo "CFLAGS=$CFLAGS" >> $config_host_mak
 echo "CFLAGS_NOPIE=$CFLAGS_NOPIE" >> $config_host_mak
 echo "QEMU_CFLAGS=$QEMU_CFLAGS" >> $config_host_mak
+echo "EXTRA_CXXFLAGS=$EXTRA_CXXFLAGS" >> $config_host_mak
 echo "QEMU_INCLUDES=$QEMU_INCLUDES" >> $config_host_mak
 if test "$sparse" = "yes" ; then
   echo "CC           := REAL_CC=\"\$(CC)\" cgcc"       >> $config_host_mak
