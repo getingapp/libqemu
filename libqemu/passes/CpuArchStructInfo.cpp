@@ -3,8 +3,8 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/CFG.h"
+#include "llvm/IR/DebugInfo.h"
 #include <llvm/IR/DataLayout.h>
 
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -72,7 +72,7 @@ std::unique_ptr<StructInfo> StructInfo::getFromGlobalPointer(Module *module, llv
             }
 
             //Go through pointers until we reach a structure
-            DIType diStructType(diGlobalVar.getType());
+            DIType diStructType(diGlobalVar.getType().resolve(*typeIdentifierMap));
             while (diStructType.isDerivedType() && !diStructType.isCompositeType()) {
                 diStructType = std::unique_ptr<DIDerivedType>(new DIDerivedType(diStructType))->getTypeDerivedFrom().resolve(*typeIdentifierMap);
             }
@@ -130,7 +130,7 @@ static std::unique_ptr<StructInfo> getCpuArchStructInfo(Module *module)
             }
 
             assert(diGlobalVar.getType().isDerivedType());
-            DIDerivedType diEnvPtrType(diGlobalVar.getType());
+            DIDerivedType diEnvPtrType(diGlobalVar.getType().resolve(*typeIdentifierMap));
             assert(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap).isCompositeType());
             return std::unique_ptr<StructInfo>(new StructInfo(module, structType, new DICompositeType(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap)), typeIdentifierMap));
         }

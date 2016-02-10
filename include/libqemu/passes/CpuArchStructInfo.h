@@ -4,7 +4,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 
 #include <unordered_map>
 #include <memory>

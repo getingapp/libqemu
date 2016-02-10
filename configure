@@ -3326,7 +3326,7 @@ fi
 # llvm probe
 # llvm is required for the libqemu targets
 llvm_version_major_required=3
-llvm_version_minor_required=4
+llvm_version_minor_required=5
 
 llvm_required=no
 llvm_components="jit bitreader bitwriter ipo linker engine irreader"
@@ -3345,7 +3345,7 @@ cat > $TMPCXX << EOF
 #if LLVM_VERSION_MAJOR != $llvm_version_major_required || LLVM_VERSION_MINOR != $llvm_version_minor_required
 #error Wrong LLVM version
 #endif
-int main(void) { llvm::LLVMContext& c = llvm::getGlobalContext(); return &c != NULL; }
+int main(void) { llvm::LLVMContext& c = llvm::getGlobalContext(); c.getInlineAsmDiagnosticContext(); return 0;}
 EOF
 
 cat > $TMPC << EOF
@@ -3366,7 +3366,9 @@ EOF
   llvm_cflags=$( $llvm_config --cflags 2> /dev/null )
   llvm_cxxflags=$( $llvm_config --cxxflags 2> /dev/null )
   llvm_ldflags=$( $llvm_config --ldflags 2> /dev/null )
-  llvm_libs=$( $llvm_config --libs $llvm_components 2> /dev/null )
+  llvm_component_libs=$( $llvm_config --libs $llvm_components 2> /dev/null )
+  llvm_system_libs=$( $llvm_config --system-libs 2> /dev/null )
+  llvm_libs="${llvm_component_libs} ${llvm_system_libs}"
   llvm_link=$( $llvm_config --bindir )/llvm-link
   if compile_prog_cxx "$llvm_cxxflags" "$llvm_libs $llvm_ldflags"; then
     llvm=yes

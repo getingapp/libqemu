@@ -82,7 +82,7 @@ extern "C" {
 #include <llvm/IR/Module.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Intrinsics.h>
-#include <llvm/Analysis/Verifier.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Transforms/Scalar.h>
@@ -130,8 +130,8 @@ using llvm::sys::DynamicLibrary;
 using llvm::ArrayRef;
 using llvm::APInt;
 using llvm::ReturnInst;
-using llvm::llvm_start_multithreaded;
 using llvm::raw_string_ostream;
+using llvm::DataLayoutPass;
 namespace Intrinsic = llvm::Intrinsic;
 
 
@@ -430,7 +430,7 @@ TCGLLVMContextPrivate::TCGLLVMContextPrivate()
 
     m_functionPassManager = new FunctionPassManager(m_module);
     m_functionPassManager->add(
-            new DataLayout(*m_executionEngine->getDataLayout()));
+            new DataLayoutPass(*m_executionEngine->getDataLayout()));
 
     m_functionPassManager->add(createReassociatePass());
     m_functionPassManager->add(createConstantPropagationPass());
