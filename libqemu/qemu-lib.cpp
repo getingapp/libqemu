@@ -1,4 +1,5 @@
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/FileSystem.h>
 
 extern "C" {
 #include "qemu-common.h"
@@ -14,6 +15,7 @@ extern "C" {
 #include <libqemu/qemu-lib-external.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/IR/Module.h>
 #include <libqemu/tcg-llvm.h>
 
 int singlestep;
@@ -169,7 +171,13 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool si
     function = static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function;
 
     if (llvm::verifyFunction(*function, &llvm::errs())) {
-        llvm::errs() << "Failed to verify module" << '\n';
+        llvm::errs() << "Failed to verify function " << function->getName() 
+                << ". Dumping module contents to /tmp/module.ir" << '\n';
+        std::string error;
+        llvm::raw_fd_ostream fd_ostream("/tmp/module.ir", error, llvm::sys::fs::F_None);
+        fd_ostream << *tcg_llvm_ctx->getModule() << '\n';
+        fd_ostream.flush();
+        fd_ostream.close();
         exit(1);
     }
 
