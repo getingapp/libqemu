@@ -242,7 +242,7 @@ public:
             if (va->getType() == intType(64)) {
                 *v1 = m_builder.CreateTrunc(va, intType(target));
             } else if (va->getType() != intType(32)) {
-                assert(false);
+                llvm_unreachable("Only know how to handle 32 and 64 bit types");
             }
         }
     }
@@ -282,8 +282,7 @@ public:
         if (ConstantInt *cste = dyn_cast<ConstantInt>(v)) {
             return *cste->getValue().getRawData();
         }
-        llvm::errs() << *v << '\n';
-        assert(false && "Not a constant");
+        llvm_unreachable("Value is not a constant");
 	return 0;
     }
 
@@ -564,7 +563,8 @@ unsigned TCGLLVMContextPrivate::getValueBits(int idx)
     switch (m_tcgContext->temps[idx].type) {
         case TCG_TYPE_I32: return 32;
         case TCG_TYPE_I64: return 64;
-        default: assert(false && "Unknown size");
+        default: 
+            llvm_unreachable("Uknown TCG type size");
     }
     return 0;
 }
@@ -586,8 +586,7 @@ Value* TCGLLVMContextPrivate::getValue(int idx)
             m_values[idx]->setName(name.str());
 #endif
         } else {
-            // Temp value was not previousely assigned
-            assert(false); // XXX: or return zero constant ?
+            llvm_unreachable("temp value was not previously assigned");
         }
     }
 
@@ -886,9 +885,9 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
                             v = m_builder.CreateIntToPtr(v, curHelperArg->getType(), v->getName());
                         }
                         else {
-                            assert(false && "other cast instruction necessary, implement");
+                            llvm_unreachable("unimplemented cast instruction");
                         }
-                        assert(v);
+                        assert(v && "Could not translate TCG value into LLVM value");
                     }
                     argValues.push_back(v);
                     curHelperArg++;
@@ -1508,7 +1507,8 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
         switch (binOp->getOpcode())  {
             case llvm::BinaryOperator::Add: offset += op->getSExtValue(); break;
             case llvm::BinaryOperator::Sub: offset -= op->getSExtValue(); break;
-            default: assert(false); //This operator not implemented yet
+            default:
+                llvm_unreachable("Unimplemented binary operation"); 
         }
 
         for ( Value::use_iterator useI = binOp->use_begin(), useE = binOp->use_end(); useI != useE; ++useI )
@@ -1609,8 +1609,7 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
         }
     }
     else {
-        llvm::errs() << "Don't know how to handle " << *envUse << '\n';
-        assert(false);
+        llvm_unreachable("Unimplemented LLVM instruction type *envUse");
     }
 }
 
