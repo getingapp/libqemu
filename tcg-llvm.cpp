@@ -832,68 +832,70 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
 
     case INDEX_op_call:
         {
-            int nb_oargs = args[0] >> 16;
-            int nb_iargs = args[0] & 0xffff;
+            int nb_oargs = op->callo;
+            int nb_iargs = op->calli;
+	    
+            //Get helper function, if we can find it
+            tcg_target_ulong helperAddrC = args[nb_oargs + nb_iargs];
+            assert(helperAddrC);
 
-            //int flags = args[nb_oargs + nb_iargs + 1];
-            //assert((flags & TCG_CALL_TYPE_MASK) == TCG_CALL_TYPE_STD);
+            const char *helperName = tcg_find_helper(m_tcgContext, helperAddrC);
+            assert(helperName);
+
+            std::string funcName = std::string("helper_") + helperName;
+            Function* helperFunc = m_module->getFunction(funcName);
+
+                //Get output argument type
+                assert(nb_oargs == 0 || nb_oargs == 1);
+                llvm::Type* retType = nb_oargs == 0 ?
+                    llvm::Type::getVoidTy(m_context) : wordType(getValueBits(args[0]));
+
+                //Gather input arguments
+                assert(nb_iargs >= 1);
+
+            if (!helperFunc) {
+                std::vector<llvm::Type*> argTypes;
+                argTypes.reserve(nb_iargs);
+                    
+                for(int i=0; i < nb_iargs; ++i) {
+                    TCGArg arg = args[nb_oargs + i];
+                    if(arg != TCG_CALL_DUMMY_ARG) {
+                        Value *v = getValue(arg);
+                        argTypes.push_back(v->getType());
+                    }
+                }
+                helperFunc = Function::Create(
+                    FunctionType::get(retType, argTypes, false),
+                    Function::PrivateLinkage, funcName, m_module);
+            }
 
             std::vector<Value*> argValues;
-            std::vector<llvm::Type*> argTypes;
-            argValues.reserve(nb_iargs-1);
-            argTypes.reserve(nb_iargs-1);
-            for(int i=0; i < nb_iargs-1; ++i) {
-                TCGArg arg = args[nb_oargs + i + 1];
+            argValues.reserve(nb_iargs);
+            Function::arg_iterator curHelperArg = helperFunc->arg_begin();
+            Function::arg_iterator endHelperArg = helperFunc->arg_end();
+
+
+            for(int i=0; i < nb_iargs; ++i) {
+                TCGArg arg = args[nb_oargs + i];
                 if(arg != TCG_CALL_DUMMY_ARG) {
                     Value *v = getValue(arg);
+                    assert(curHelperArg && (curHelperArg != endHelperArg));
+                    if (curHelperArg->getType() != v->getType()) {
+                        if (v->getType()->isIntegerTy() && curHelperArg->getType()->isPointerTy()) {
+                            v = m_builder.CreateIntToPtr(v, curHelperArg->getType(), v->getName());
+                        }
+                        else {
+                            assert(false && "other cast instruction necessary, implement");
+                        }
+                        assert(v);
+                    }
                     argValues.push_back(v);
-                    argTypes.push_back(v->getType());
+                    curHelperArg++;
                 }
             }
 
-            assert(nb_oargs == 0 || nb_oargs == 1);
-            llvm::Type* retType = nb_oargs == 0 ?
-                llvm::Type::getVoidTy(m_context) : wordType(getValueBits(args[1]));
-
-            uintptr_t helperAddrC = args[nb_oargs + nb_iargs + 1];
-            Value* result;
-
-            if (!execute_llvm) {
-                //Generate this in S2E mode
-                assert(helperAddrC);
-
-                const char *helperName = tcg_find_helper(m_tcgContext, helperAddrC);
-                assert(helperName);
-
-                std::string funcName = std::string("helper_") + helperName;
-                Function* helperFunc = m_module->getFunction(funcName);
-                if(!helperFunc) {
-                    helperFunc = Function::Create(
-                            FunctionType::get(retType, argTypes, false),
-                            Function::PrivateLinkage, funcName, m_module);
-                    m_executionEngine->addGlobalMapping(helperFunc,
-                                                        (void*) helperAddrC);
-                    /* XXX: Why do we need this ? */
-                    DynamicLibrary::AddSymbol(funcName, (void*) helperAddrC);
-                }
-
-                result = m_builder.CreateCall(helperFunc,
+            Value* result = m_builder.CreateCall(helperFunc,
                                               ArrayRef<Value*>(argValues));
-            } else { //if (!execute_llvm)
-                //Generate this in LLVM mode
-                llvm::Type* helperFunctionPtrTy = PointerType::get(
-                        FunctionType::get(retType, argTypes, false), 0);
-
-                Value* funcAddr = m_builder.CreateIntToPtr(
-                		//TODO: sizeof ugly here
-                        ConstantInt::get(intType(sizeof(tcg_target_ulong) * 8), helperAddrC),
-                        helperFunctionPtrTy);
-
-                result = m_builder.CreateCall(funcAddr,
-                                    ArrayRef<Value*>(argValues));
-            }
-
-
             /* Invalidate in-memory values because
              * function might have changed them */
             for(int i=0; i<m_tcgContext->nb_globals; ++i)
@@ -908,7 +910,7 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
                 delPtrForValue(i);
 
             if(nb_oargs == 1)
-                setValue(args[1], result);
+                setValue(args[0], result);
         }
         break;
 
