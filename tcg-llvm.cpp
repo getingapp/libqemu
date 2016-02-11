@@ -134,6 +134,7 @@ using llvm::raw_string_ostream;
 using llvm::DataLayoutPass;
 namespace Intrinsic = llvm::Intrinsic;
 
+static const unsigned CPUARCHSTATE_INDEX_IN_ARCHCPU = 1;
 
 
 //TODO: Hack to make stuff compile
@@ -1593,8 +1594,16 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
         {
             llvm::Value *op = call->getArgOperand(i);
             if (op == oldEnv)  {
-                llvm::CastInst *cast = llvm::CastInst::CreatePointerCast(newEnv, op->getType(), op->getName(), call);
-                call->setArgOperand(i, cast);
+                //TODO: Hackish, but if a function refers to env, it means CPUArchState and not ArchCPU. 
+                //Simply reference CPUArchState pointer in ArchCPU here.
+                llvm::SmallVector<Value *, 2> gepIndices;
+                gepIndices.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(newEnv->getContext()), 0));
+                gepIndices.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(newEnv->getContext()), CPUARCHSTATE_INDEX_IN_ARCHCPU));
+                llvm::Instruction *inst = llvm::GetElementPtrInst::Create(newEnv, gepIndices, "env_ptr", call);
+                if (inst->getType() != op->getType()) {
+                    inst = llvm::CastInst::CreatePointerCast(inst, op->getType(), op->getName(), call);
+                }
+                call->setArgOperand(i, inst);
                 break;
             }
         }
