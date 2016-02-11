@@ -297,7 +297,7 @@ public:
                              int mem_index, int bits);
 
     void generateTraceCall(uintptr_t pc);
-    int generateOperation(int opc, const TCGArg *args);
+    void generateOperation(TCGOp *op, const TCGArg *args);
 
     inline Value *generateCondition(TCGCond cond, Value *arg1, Value *arg2);
     Value *generateAndC(TCGArg arg1, TCGArg arg2);
@@ -815,11 +815,11 @@ Value *TCGLLVMContextPrivate::generateCondition(TCGCond cond, Value *arg1, Value
     }
 }
 
-int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
+void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
 {
     Value *v;
+    TCGOpcode opc = op->opc;
     TCGOpDef &def = tcg_op_defs[opc];
-    int nb_args = def.nb_args;
 
     switch(opc) {
     case INDEX_op_insn_start:
@@ -834,7 +834,6 @@ int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
         {
             int nb_oargs = args[0] >> 16;
             int nb_iargs = args[0] & 0xffff;
-            nb_args = nb_oargs + nb_iargs + def.nb_cargs + 1;
 
             //int flags = args[nb_oargs + nb_iargs + 1];
             //assert((flags & TCG_CALL_TYPE_MASK) == TCG_CALL_TYPE_STD);
@@ -1373,8 +1372,6 @@ int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
         tcg_abort();
         break;
     }
-
-    return nb_args;
 }
 
 void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
@@ -1404,31 +1401,13 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
     initGlobalsAndLocalTemps();
 
     /* Generate code for each opc */
-    const TCGArg *args = s->gen_opparam_buf;
     TCGOp *op;
     for ( int opc_idx = s->gen_first_op_idx; opc_idx >= 0; opc_idx = op->next) {
-	op = &s->gen_op_buf[opc_idx];
-        TCGOpcode opc = op->opc;
-
-        if(opc == INDEX_op_insn_start) {
-//            // volatile store of current OPC index
-//            m_builder.CreateStore(ConstantInt::get(wordType(), opc_idx),
-//                m_builder.CreateIntToPtr(
-//                    ConstantInt::get(wordType(),
-//                        (uint64_t) &tcg_llvm_runtime.last_opc_index),
-//                    wordPtrType()),
-//                true);
-//            // volatile store of current PC
-//            m_builder.CreateStore(ConstantInt::get(wordType(), args[0]),
-//                m_builder.CreateIntToPtr(
-//                    ConstantInt::get(wordType(),
-//                        (uint64_t) &tcg_llvm_runtime.last_pc),
-//                    wordPtrType()),
-//                true);
-        }
+	    op = &s->gen_op_buf[opc_idx];
+        const TCGArg *args = &s->gen_opparam_buf[op->args];
 
         generateTraceCall(tb->pc);
-        args += generateOperation(opc, args);
+        generateOperation(op, args);
     }
 
     /* Finalize function */
