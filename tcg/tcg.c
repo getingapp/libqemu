@@ -955,7 +955,7 @@ char *tcg_get_arg_str_i64(TCGContext *s, char *buf, int buf_size, TCGv_i64 arg)
 }
 
 /* Find helper name.  */
-static inline const char *tcg_find_helper(TCGContext *s, uintptr_t val)
+const char *tcg_find_helper(TCGContext *s, uintptr_t val)
 {
     const char *ret = NULL;
     if (s->helpers) {

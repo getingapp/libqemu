@@ -815,24 +815,6 @@ Value *TCGLLVMContextPrivate::generateCondition(TCGCond cond, Value *arg1, Value
     }
 }
 
-typedef struct TCGHelperInfo {
-    void *func;
-    const char *name;
-    unsigned flags;
-    unsigned sizemask;
-} TCGHelperInfo;
-
-static const char *get_helper_name(TCGContext *s, void *helper)
-{
-        TCGHelperInfo *info = (TCGHelperInfo *) g_hash_table_lookup(s->helpers, helper);
-
-        if (!info)  {
-                return NULL;
-        }
-
-        return info->name;
-}
-
 int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
 {
     Value *v;
@@ -874,15 +856,14 @@ int TCGLLVMContextPrivate::generateOperation(int opc, const TCGArg *args)
             llvm::Type* retType = nb_oargs == 0 ?
                 llvm::Type::getVoidTy(m_context) : wordType(getValueBits(args[1]));
 
-            tcg_target_ulong helperAddrC = args[nb_oargs + nb_iargs + 1];
+            uintptr_t helperAddrC = args[nb_oargs + nb_iargs + 1];
             Value* result;
 
             if (!execute_llvm) {
                 //Generate this in S2E mode
                 assert(helperAddrC);
 
-                const char *helperName = get_helper_name(m_tcgContext, 
-                                                             (void *) helperAddrC);
+                const char *helperName = tcg_find_helper(m_tcgContext, helperAddrC);
                 assert(helperName);
 
                 std::string funcName = std::string("helper_") + helperName;

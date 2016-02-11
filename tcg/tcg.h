@@ -643,6 +643,7 @@ static inline TCGv_i32 tcg_temp_local_new_i32(void)
 }
 void tcg_temp_free_i32(TCGv_i32 arg);
 char *tcg_get_arg_str_i32(TCGContext *s, char *buf, int buf_size, TCGv_i32 arg);
+const char *tcg_find_helper(TCGContext *s, uintptr_t val);
 
 TCGv_i64 tcg_global_reg_new_i64(int reg, const char *name);
 TCGv_i64 tcg_global_mem_new_i64(int reg, intptr_t offset, const char *name);
