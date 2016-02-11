@@ -139,7 +139,7 @@ namespace Intrinsic = llvm::Intrinsic;
 //TODO: Hack to make stuff compile
 static const bool execute_llvm = false;
 
-//#undef NDEBUG
+#undef NDEBUG
 
 extern "C" {
 //    TCGLLVMContext* tcg_llvm_ctx = 0;
@@ -1512,7 +1512,7 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
 
         for ( Value::use_iterator useI = binOp->use_begin(), useE = binOp->use_end(); useI != useE; ++useI )
         {
-            replaceEnvInstructionsWith(newEnv, binOp, *useI, offset, eraseList);
+            replaceEnvInstructionsWith(newEnv, binOp, useI->getUser(), offset, eraseList);
         }
 
         eraseList.push_back(binOp);
@@ -1522,7 +1522,7 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
         //Cast does not change the offset, just recurse
         for ( Value::use_iterator useI = cast->use_begin(), useE = cast->use_end(); useI != useE; ++useI )
         {
-            replaceEnvInstructionsWith(newEnv, cast, *useI, offset, eraseList);
+            replaceEnvInstructionsWith(newEnv, cast, useI->getUser(), offset, eraseList);
         }
 
         eraseList.push_back(cast);
@@ -1611,36 +1611,32 @@ void TCGLLVMContextPrivate::replaceEnv(Function &f)
 
     llvm::Argument *envPtr = f.arg_begin();
 
-    for ( llvm::GlobalVariable::use_iterator useI = envPtr->use_begin(), useE = envPtr->use_end(); useI != useE; ++useI )
+    for ( llvm::Argument::use_iterator useI = envPtr->use_begin(), useE = envPtr->use_end(); useI != useE; ++useI )
     {
         //Go over first gep and load of env pointer
-        llvm::GetElementPtrInst *gep = dyn_cast<llvm::GetElementPtrInst>(*useI);
+        llvm::GetElementPtrInst *gep = dyn_cast<llvm::GetElementPtrInst>(useI->getUser());
         if (!gep || gep->getNumIndices() != 1 || gep->getNumUses() != 1) {
-            assert(false);
-            continue;
+            llvm_unreachable("Expected a GEP instruction to be the user of the first function argumenti");
         }
         llvm::ConstantInt *idx = dyn_cast<llvm::ConstantInt>(gep->idx_begin());
         if (!idx || idx->getZExtValue() != 0) {
-            assert(false);
-            continue;
+            llvm_unreachable("GEP instruction index not equals {0}.");
         }
 
-        llvm::CastInst *cast = dyn_cast<llvm::CastInst>(*gep->use_begin());
+        llvm::CastInst *cast = dyn_cast<llvm::CastInst>(gep->use_begin()->getUser());
         if (!cast || cast->getNumUses() != 1) {
-            assert(false);
-            continue;
+            llvm_unreachable("Instruction after GEP is not a cast");
         }
-        llvm::LoadInst *loadInst = dyn_cast<llvm::LoadInst>(*cast->use_begin());
+        llvm::LoadInst *loadInst = dyn_cast<llvm::LoadInst>(cast->use_begin()->getUser());
         if (!loadInst) {
-            assert(false);
-            continue;
+            llvm_unreachable("Instruction after cast is not a load");
         }
 
         //Now replace following uses
         std::list<llvm::Instruction *> uses;
         for ( llvm::Instruction::use_iterator useI2 = loadInst->use_begin(), useE2 = loadInst->use_end(); useI2 != useE2; ++useI2 )
         {
-            llvm::Instruction *useInst = dyn_cast<llvm::Instruction>(*useI2);
+            llvm::Instruction *useInst = dyn_cast<llvm::Instruction>(useI2->getUser());
             if (!useInst) {
                 assert(useInst && "Use is not an instruction");
                 continue;
