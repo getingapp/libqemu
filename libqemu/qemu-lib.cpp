@@ -111,8 +111,7 @@ int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_han
 
 LLVMModuleRef libqemu_get_module(void)
 {
-    assert(false);
-    return NULL;
+    return wrap(tcg_llvm_ctx->getModule());
 }
 
 /* Allocate a new translation block. Flush the translation buffer if
