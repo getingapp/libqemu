@@ -1245,7 +1245,7 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
     }
 
     case INDEX_op_exit_tb:
-        m_builder.CreateRet(ConstantInt::get(wordType(), args[0]));
+        m_builder.CreateRetVoid();
         break;
 
     case INDEX_op_goto_tb:
@@ -1388,7 +1388,7 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
         m_tbFunction->eraseFromParent();
     */
     FunctionType *tbFunctionType = FunctionType::get(
-        wordType(),
+        llvm::Type::getVoidTy(m_module->getContext()),
         std::vector<llvm::Type*>(1, dyn_cast<llvm::PointerType>(m_archcpuPtrType)->getElementType()), false);
 
     m_tbFunction = Function::Create(tbFunctionType,
@@ -1414,7 +1414,7 @@ void TCGLLVMContextPrivate::generateCode(TCGContext *s, TranslationBlock *tb)
 
     /* Finalize function */
     if(!isa<ReturnInst>(m_tbFunction->back().back()))
-        m_builder.CreateRet(ConstantInt::get(wordType(), 0));
+        m_builder.CreateRetVoid();
 
     /* Clean up unused m_values */
     for(int i=0; i<TCG_MAX_TEMPS; ++i)
