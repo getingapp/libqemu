@@ -134,13 +134,18 @@ void libqemu_raise_error(void *env, int code)
     siglongjmp(ENV_GET_CPU((CPUArchState *) env)->jmp_env, code);
 }
 
-LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst)
+int libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst, LLVMValueRef * result)
 {
     TranslationBlock *tb;
     int max_cycles = CF_COUNT_MASK;
     llvm::Function *function;
     tcg_insn_unit *gen_code_buf;
-    LLVMValueRef result = NULL;
+    int error_code = 0;
+
+    /* Set output parameter to NULL to fail early if something goes wrong */
+    if (result) {
+        *result = NULL;
+    }
 
     singlestep = single_inst;
 
@@ -168,7 +173,7 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool si
     tb->cflags = CF_COUNT_MASK | CF_NOCACHE | CF_IGNORE_ICOUNT;
     tcg_func_start(&tcg_ctx);
 
-    if (sigsetjmp(thread_cpu->jmp_env, 0) == 0) {
+    if ((error_code = sigsetjmp(thread_cpu->jmp_env, 0)) == 0) {
         gen_intermediate_code(env, tb);
 
         tcg_dump_ops(&tcg_ctx);
@@ -187,9 +192,11 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool si
             exit(1);
         }
 
-        result = wrap(function);
+        if (result) {
+            *result = wrap(function);
+        }
     }
 
     tb_free(tb);
-    return result;
+    return error_code;
 }

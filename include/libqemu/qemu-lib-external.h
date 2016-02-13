@@ -8,12 +8,12 @@
 extern "C" {
 #endif 
 
-#define FLAG_NONE 0
-#define FLAG_ARM_THUMB      (1 << 0)
-#define FLAG_ARM_BSWAP_CODE (1 << 16)
-
-#define CFLAG_NONE 0
-
+/**
+ * This union describes code flags for each architecture.
+ * Code flags influence translation, e.g., the .arm.thumb flag
+ * will tell the disassembler to disassemble as ARM Thumb instructions
+ * (16 bit length) instead of ARM instructions (32 bit length).
+ */
 typedef union CodeFlags
 {
     struct {
@@ -54,9 +54,40 @@ typedef union CodeFlags
     uint64_t _value;
 } CodeFlags;
 
+/**
+ * Initialize the library.
+ * @param ld_handler Handler function for memory read accesses.
+ * @param st_handler Currently unused and ignored. 
+ * Might be used later if emulation is added. 
+ * @return 0 on success or error code.
+ */ 
 int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_handler);
+
+/**
+ * Get the LLVM module that the code is translated into.
+ * @return Reference to LLVM module.
+ */
 LLVMModuleRef libqemu_get_module(void);
-LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst);
+
+/**
+ * Generate LLVM intermediate code from machine code.
+ * @param pc Instruction pointer where machine code starts.
+ * @param flags Code flags that influence translation. See CodeFlags structure for detauls.
+ * @param single_inst If set to <b>true</b> only a single instrucdtion will be translated,
+ *    otherwise a basic block.
+ * @param[out] Pointer to generated LLVM function containing the translation of a machine 
+ *    instruction or BB will be stored in this value.
+ * @return 0 on success, error code otherwise.
+ */
+int libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst, LLVMValueRef * function);
+
+/**
+ * Raise an error which will abort IR translation.
+ * This function is useful to call when nonexistent memory is referenced in a memory handler.
+ * The libqemu_gen_intermediate_code function will then return immediatly with the error code.
+ * @param env The env pointer which is passed to the memory load handler.
+ * @param code Error code. Should not be 0.
+ */
 __attribute__((noreturn)) void libqemu_raise_error(void *env, int code);
 
 #ifdef __cplusplus
