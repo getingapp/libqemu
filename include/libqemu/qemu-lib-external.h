@@ -57,6 +57,7 @@ typedef union CodeFlags
 int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_handler);
 LLVMModuleRef libqemu_get_module(void);
 LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst);
+__attribute__((noreturn)) void libqemu_raise_error(void *env, int code);
 
 #ifdef __cplusplus
 }

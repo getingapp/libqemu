@@ -129,12 +129,18 @@ static TranslationBlock *tb_alloc(target_ulong pc)
     return tb;
 }
 
+void libqemu_raise_error(void *env, int code)
+{
+    siglongjmp(ENV_GET_CPU((CPUArchState *) env)->jmp_env, code);
+}
+
 LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst)
 {
     TranslationBlock *tb;
     int max_cycles = CF_COUNT_MASK;
     llvm::Function *function;
     tcg_insn_unit *gen_code_buf;
+    LLVMValueRef result = NULL;
 
     singlestep = single_inst;
 
@@ -162,25 +168,28 @@ LLVMValueRef libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool si
     tb->cflags = CF_COUNT_MASK | CF_NOCACHE | CF_IGNORE_ICOUNT;
     tcg_func_start(&tcg_ctx);
 
-    gen_intermediate_code(env, tb);
+    if (sigsetjmp(thread_cpu->jmp_env, 0) == 0) {
+        gen_intermediate_code(env, tb);
 
-    tcg_dump_ops(&tcg_ctx);
+        tcg_dump_ops(&tcg_ctx);
 
-    tcg_llvm_gen_code(tcg_llvm_ctx, &tcg_ctx, tb);
-    function = static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function;
+        tcg_llvm_gen_code(tcg_llvm_ctx, &tcg_ctx, tb);
+        function = static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function;
 
-    if (llvm::verifyFunction(*function, &llvm::errs())) {
-        llvm::errs() << "Failed to verify function " << function->getName() 
-                << ". Dumping module contents to /tmp/module.ir" << '\n';
-        std::string error;
-        llvm::raw_fd_ostream fd_ostream("/tmp/module.ir", error, llvm::sys::fs::F_None);
-        fd_ostream << *tcg_llvm_ctx->getModule() << '\n';
-        fd_ostream.flush();
-        fd_ostream.close();
-        exit(1);
+        if (llvm::verifyFunction(*function, &llvm::errs())) {
+            llvm::errs() << "Failed to verify function " << function->getName() 
+                    << ". Dumping module contents to /tmp/module.ir" << '\n';
+            std::string error;
+            llvm::raw_fd_ostream fd_ostream("/tmp/module.ir", error, llvm::sys::fs::F_None);
+            fd_ostream << *tcg_llvm_ctx->getModule() << '\n';
+            fd_ostream.flush();
+            fd_ostream.close();
+            exit(1);
+        }
+
+        result = wrap(function);
     }
 
-    /* TODO: Generate LLVM here */
     tb_free(tb);
-    return wrap(function);
+    return result;
 }
