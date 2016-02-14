@@ -70,6 +70,12 @@ int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_han
 LLVMModuleRef libqemu_get_module(void);
 
 /**
+ * Get the name of the target that this library was built for.
+ * @return Libqemu target name.
+ */
+const char* libqemu_get_target_name(void);
+
+/**
  * Generate LLVM intermediate code from machine code.
  * @param pc Instruction pointer where machine code starts.
  * @param flags Code flags that influence translation. See CodeFlags structure for detauls.

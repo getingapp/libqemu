@@ -134,6 +134,11 @@ void libqemu_raise_error(void *env, int code)
     siglongjmp(ENV_GET_CPU((CPUArchState *) env)->jmp_env, code);
 }
 
+const char* libqemu_get_target_name(void)
+{
+    return TARGET_NAME;
+}
+
 int libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst, LLVMValueRef * result)
 {
     TranslationBlock *tb;
