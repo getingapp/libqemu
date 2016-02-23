@@ -167,7 +167,7 @@ endif # CONFIG_SOFTMMU
 # Qemu library target
 ifdef CONFIG_LIBQEMU
 
-QEMU_CFLAGS+=-I$(SRC_PATH)/libqemu  
+QEMU_CFLAGS+=-I$(SRC_PATH)/libqemu -I$(SRC_PATH)/libqemu/$(TARGET_ABI_DIR)
 obj-y += libqemu/
 obj-y += gdbstub.o helpers.o  
 

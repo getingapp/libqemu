@@ -16,7 +16,7 @@
 
 #include "exec/user/thunk.h"
 #include "syscall_defs.h"
-//#include "syscall.h"
+#include "syscall.h"
 #include "exec/gdbstub.h"
 #include "qemu/queue.h"
 
