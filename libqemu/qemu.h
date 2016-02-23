@@ -80,17 +80,17 @@ struct vm86_saved_state {
 
 #define MAX_SIGQUEUE_SIZE 1024
 
-//struct sigqueue {
-//    struct sigqueue *next;
-//    target_siginfo_t info;
-//};
-//
-//struct emulated_sigtable {
-//    int pending; /* true if signal is pending */
-//    struct sigqueue *first;
-//    struct sigqueue info; /* in order to always have memory for the
-//                             first signal, we put it here */
-//};
+struct sigqueue {
+    struct sigqueue *next;
+    target_siginfo_t info;
+};
+
+struct emulated_sigtable {
+    int pending; /* true if signal is pending */
+    struct sigqueue *first;
+    struct sigqueue info; /* in order to always have memory for the
+                             first signal, we put it here */
+};
 
 /* NOTE: we force a big alignment so that the stack stored after is
    aligned too */
@@ -129,8 +129,8 @@ typedef struct TaskState {
     struct image_info *info;
     struct linux_binprm *bprm;
 
-//    struct emulated_sigtable sigtab[TARGET_NSIG];
-//    struct sigqueue sigqueue_table[MAX_SIGQUEUE_SIZE]; /* siginfo queue */
+    struct emulated_sigtable sigtab[TARGET_NSIG];
+    struct sigqueue sigqueue_table[MAX_SIGQUEUE_SIZE]; /* siginfo queue */
     struct sigqueue *first_free; /* first free siginfo queue entry */
     int signal_pending; /* non zero if a signal may be pending */
 } __attribute__((aligned(16))) TaskState;
@@ -440,8 +440,8 @@ static inline void *lock_user_string(abi_ulong guest_addr)
  * they may need access to the target-independent structures
  * above, so include them last.
  */
-//#include "target_cpu.h"
-//#include "target_signal.h"
-//#include "target_structs.h"
+#include "target_cpu.h"
+#include "target_signal.h"
+#include "target_structs.h"
 
 #endif /* QEMU_H */

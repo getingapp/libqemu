@@ -22,7 +22,7 @@
 
 /* SMM support */
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 
 void do_smm_enter(X86CPU *cpu)
 {

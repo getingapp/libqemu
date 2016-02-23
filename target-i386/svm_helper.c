@@ -24,7 +24,7 @@
 
 /* Secure Virtual Machine helpers */
 
-#if defined(CONFIG_USER_ONLY)
+#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
 
 void helper_vmrun(CPUX86State *env, int aflag, int next_eip_addend)
 {

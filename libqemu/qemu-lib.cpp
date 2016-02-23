@@ -28,6 +28,7 @@ libqemu_store_handler *libqemu_st = NULL;
 static TCGLLVMContext *tcg_llvm_ctx = NULL;
 unsigned long guest_base = 0;
 int have_guest_base = 0;
+char *exec_path;
 
 int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_handler)
 {

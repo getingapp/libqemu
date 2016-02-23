@@ -169,7 +169,7 @@ ifdef CONFIG_LIBQEMU
 
 QEMU_CFLAGS+=-I$(SRC_PATH)/libqemu -I$(SRC_PATH)/libqemu/$(TARGET_ABI_DIR)
 obj-y += libqemu/
-obj-y += gdbstub.o helpers.o  
+obj-y += gdbstub.o helpers.o user-exec.o thunk.o
 
 tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) -std=c++11
 tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
