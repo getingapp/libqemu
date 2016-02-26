@@ -88,6 +88,7 @@ extern "C" {
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/Threading.h>
+#include <llvm/Transforms/Utils/Local.h>
 
 #include <llvm/Support/DynamicLibrary.h>
 #include <llvm/Support/raw_ostream.h>
@@ -699,14 +700,16 @@ inline void TCGLLVMContextPrivate::delLabel(TCGLabel *lbl)
 
 void TCGLLVMContextPrivate::startNewBasicBlock(BasicBlock *bb)
 {
-    if(!bb)
+    if(!bb) {
         bb = BasicBlock::Create(m_context);
-    else
+    } else {
         assert(bb->getParent() == 0);
+    }
 
-    if(!m_builder.GetInsertBlock()->getTerminator())
+    if(!m_builder.GetInsertBlock()->getTerminator()) {
         m_builder.CreateBr(bb);
-
+    }
+    
     m_tbFunction->getBasicBlockList().push_back(bb);
     m_builder.SetInsertPoint(bb);
 
@@ -1483,9 +1486,17 @@ void TCGLLVMContextPrivate::replaceEntryBB(llvm::Function &f)
 {
     llvm::BasicBlock *bb = f.begin();
     llvm::BranchInst *branch = dyn_cast<llvm::BranchInst>(bb->getTerminator());
+    llvm::BasicBlock *successor = branch->getSuccessor(0);
     assert(branch);
-    branch->getSuccessor(0)->eraseFromParent();
-    bb->eraseFromParent();
+    if (successor->getUniquePredecessor()) {
+        successor->eraseFromParent();
+        bb->eraseFromParent();
+    } else {
+        bb->eraseFromParent();
+        if (successor->getUniquePredecessor()) {
+            llvm::MergeBasicBlockIntoOnlyPred(successor);
+        }
+    }
 }
 
 
