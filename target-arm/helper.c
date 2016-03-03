@@ -11,10 +11,12 @@
 #include "arm_ldst.h"
 #include <zlib.h> /* For crc32 */
 #include "exec/semihost.h"
+#include "tcg/tcg.h"
+
 
 #define ARM_CPU_FREQ 1000000000 /* FIXME: 1 GHz, should be configurable */
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 static bool get_phys_addr(CPUARMState *env, target_ulong address,
                           int access_type, ARMMMUIdx mmu_idx,
                           hwaddr *phys_ptr, MemTxAttrs *attrs, int *prot,
@@ -702,7 +704,7 @@ static CPAccessResult pmreg_access(CPUARMState *env, const ARMCPRegInfo *ri)
     return CP_ACCESS_OK;
 }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 
 static inline bool arm_ccnt_enabled(CPUARMState *env)
 {
@@ -986,7 +988,7 @@ static const ARMCPRegInfo v7_cp_reginfo[] = {
     { .name = "PMSELR", .cp = 15, .crn = 9, .crm = 12, .opc1 = 0, .opc2 = 5,
       .access = PL0_RW, .type = ARM_CP_CONST, .resetvalue = 0,
       .accessfn = pmreg_access },
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     { .name = "PMCCNTR", .cp = 15, .crn = 9, .crm = 13, .opc1 = 0, .opc2 = 0,
       .access = PL0_RW, .resetvalue = 0, .type = ARM_CP_IO,
       .readfn = pmccntr_read, .writefn = pmccntr_write32,
@@ -1186,7 +1188,7 @@ static const ARMCPRegInfo v6k_cp_reginfo[] = {
     REGINFO_SENTINEL
 };
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 
 static CPAccessResult gt_cntfrq_access(CPUARMState *env, const ARMCPRegInfo *ri)
 {
@@ -1754,7 +1756,7 @@ static void par_write(CPUARMState *env, const ARMCPRegInfo *ri, uint64_t value)
     }
 }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 /* get_phys_addr() isn't present for user-mode-only targets */
 
 static CPAccessResult ats_access(CPUARMState *env, const ARMCPRegInfo *ri)
@@ -1956,7 +1958,7 @@ static const ARMCPRegInfo vapa_cp_reginfo[] = {
       .bank_fieldoffsets = { offsetoflow32(CPUARMState, cp15.par_s),
                              offsetoflow32(CPUARMState, cp15.par_ns) },
       .writefn = par_write },
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     /* This underdecoding is safe because the reginfo is NO_RAW. */
     { .name = "ATS", .cp = 15, .crn = 7, .crm = 8, .opc1 = 0, .opc2 = CP_ANY,
       .access = PL1_W, .accessfn = ats_access,
@@ -2915,7 +2917,7 @@ static const ARMCPRegInfo v8_cp_reginfo[] = {
     { .name = "DC_ZVA", .state = ARM_CP_STATE_AA64,
       .opc0 = 1, .opc1 = 3, .crn = 7, .crm = 4, .opc2 = 1,
       .access = PL0_W, .type = ARM_CP_DC_ZVA,
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
       /* Avoid overhead of an access check that always passes in user-mode */
       .accessfn = aa64_zva_access,
 #endif
@@ -3039,7 +3041,7 @@ static const ARMCPRegInfo v8_cp_reginfo[] = {
       .opc0 = 1, .opc1 = 4, .crn = 8, .crm = 7, .opc2 = 6,
       .access = PL2_W, .type = ARM_CP_NO_RAW,
       .writefn = tlbi_aa64_alle1is_write },
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     /* 64 bit address translation operations */
     { .name = "AT_S1E1R", .state = ARM_CP_STATE_AA64,
       .opc0 = 1, .opc1 = 0, .crn = 7, .crm = 8, .opc2 = 0,
@@ -3422,7 +3424,7 @@ static const ARMCPRegInfo el2_cp_reginfo[] = {
       .opc0 = 1, .opc1 = 4, .crn = 8, .crm = 3, .opc2 = 5,
       .access = PL2_W, .type = ARM_CP_NO_RAW,
       .writefn = tlbi_aa64_vae2is_write },
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     /* Unlike the other EL2-related AT operations, these must
      * UNDEF from EL3 if EL2 is not implemented, which is why we
      * define them here rather than with the rest of the AT ops.
@@ -4118,7 +4120,7 @@ void register_cp_regs_for_features(ARMCPU *cpu)
          * field as main ID register, and we implement only the cycle
          * count register.
          */
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
         ARMCPRegInfo pmcr = {
             .name = "PMCR", .cp = 15, .crn = 9, .crm = 12, .opc1 = 0, .opc2 = 0,
             .access = PL0_RW,
@@ -5129,7 +5131,7 @@ uint32_t HELPER(rbit)(uint32_t x)
     return revbit32(x);
 }
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 
 /* These should probably raise undefined insn exceptions.  */
 void HELPER(v7m_msr)(CPUARMState *env, uint32_t reg, uint32_t val)
@@ -7506,7 +7508,7 @@ void HELPER(dc_zva)(CPUARMState *env, uint64_t vaddr_in)
     uint64_t blocklen = 4 << cpu->dcz_blocksize;
     uint64_t vaddr = vaddr_in & ~(blocklen - 1);
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     {
         /* Slightly awkwardly, QEMU's TARGET_PAGE_SIZE may be less than
          * the block size so we might have to do more than one TLB lookup.

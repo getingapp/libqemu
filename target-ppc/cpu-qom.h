@@ -73,7 +73,7 @@ typedef struct PowerPCCPUClass {
 #endif
     void (*init_proc)(CPUPPCState *env);
     int  (*check_pow)(CPUPPCState *env);
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     int (*handle_mmu_fault)(PowerPCCPU *cpu, target_ulong eaddr, int rwx,
                             int mmu_idx);
 #endif

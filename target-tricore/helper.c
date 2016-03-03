@@ -31,7 +31,7 @@ enum {
     TLBRET_MATCH = 0
 };
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 static int get_physical_address(CPUTriCoreState *env, hwaddr *physical,
                                 int *prot, target_ulong address,
                                 int rw, int access_type)

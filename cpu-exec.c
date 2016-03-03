@@ -27,7 +27,7 @@
 #include "exec/address-spaces.h"
 #include "qemu/rcu.h"
 #include "exec/tb-hash.h"
-#if defined(TARGET_I386) && !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if defined(TARGET_I386) && !defined(CONFIG_USER_ONLY)
 #include "hw/i386/apic.h"
 #endif
 #include "sysemu/replay.h"
@@ -40,7 +40,7 @@ typedef struct SyncClocks {
     int64_t realtime_clock;
 } SyncClocks;
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 /* Allow the guest to have a max 3ms advance.
  * The difference between the 2 clocks could therefore
  * oscillate around 0.
@@ -270,7 +270,7 @@ static TranslationBlock *tb_find_slow(CPUState *cpu,
         goto found;
     }
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     /* mmap_lock is needed by tb_gen_code, and mmap_lock must be
      * taken outside tb_lock.  Since we're momentarily dropping
      * tb_lock, there's a chance that our desired tb has been
@@ -289,7 +289,7 @@ static TranslationBlock *tb_find_slow(CPUState *cpu,
     /* if no translated code available, then translate it now */
     tb = tb_gen_code(cpu, pc, cs_base, flags, 0);
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     mmap_unlock();
 #endif
 
@@ -351,7 +351,7 @@ int cpu_exec(CPUState *cpu)
     current_cpu = cpu;
 
     if (cpu->halted) {
-#if defined(TARGET_I386) && !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if defined(TARGET_I386) && !defined(CONFIG_USER_ONLY)
         if ((cpu->interrupt_request & CPU_INTERRUPT_POLL)
             && replay_interrupt()) {
             apic_poll_irq(x86_cpu->apic_state);
@@ -396,7 +396,7 @@ int cpu_exec(CPUState *cpu)
                     cpu->exception_index = -1;
                     break;
                 } else {
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
                     /* if user mode only, we simulate a fake exception
                        which will be handled outside the cpu execution
                        loop */

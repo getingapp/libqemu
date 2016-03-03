@@ -169,7 +169,32 @@ ifdef CONFIG_LIBQEMU
 
 QEMU_CFLAGS+=-I$(SRC_PATH)/libqemu -I$(SRC_PATH)/libqemu/$(TARGET_ABI_DIR)
 obj-y += libqemu/
-obj-y += gdbstub.o helpers.o user-exec.o thunk.o
+obj-y += arch_init.o cpus.o 
+obj-y += monitor.o 
+obj-y += gdbstub.o balloon.o ioport.o numa.o
+obj-y += qtest.o bootdevice.o
+obj-y += hw/
+obj-$(CONFIG_KVM) += kvm-all.o
+obj-y += memory.o cputlb.o
+obj-y += memory_mapping.o
+obj-y += dump.o
+obj-y += migration/ram.o migration/savevm.o
+LIBS := $(libs_softmmu) $(LIBS)
+
+# xen support
+obj-$(CONFIG_XEN) += xen-common.o
+obj-$(CONFIG_XEN_I386) += xen-hvm.o xen-mapcache.o
+obj-$(call lnot,$(CONFIG_XEN)) += xen-common-stub.o
+obj-$(call lnot,$(CONFIG_XEN_I386)) += xen-hvm-stub.o
+
+# Hardware support
+ifeq ($(TARGET_NAME), sparc64)
+obj-y += hw/sparc64/
+else
+obj-y += hw/$(TARGET_BASE_ARCH)/
+endif
+
+GENERATED_HEADERS += hmp-commands.h hmp-commands-info.h qmp-commands-old.h
 
 tcg-llvm.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) -std=c++11
 tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
@@ -210,8 +235,8 @@ all-obj-$(CONFIG_SOFTMMU) += $(block-obj-y)
 all-obj-$(CONFIG_USER_ONLY) += $(crypto-aes-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(crypto-obj-y)
 all-obj-$(CONFIG_SOFTMMU) += $(io-obj-y)
-all-obj-$(CONFIG_LIBQEMU) += $(crypto-aes-obj-y)
-all-obj-$(CONFIG_LIBQEMU) += helpers.o tcg-llvm.o
+all-obj-$(CONFIG_LIBQEMU) += $(crypto-obj-y) $(io-obj-y)
+all-obj-$(CONFIG_LIBQEMU) += $(block-obj-y) helpers.o tcg-llvm.o
 
 $(QEMU_PROG_BUILD): config-devices.mak
 

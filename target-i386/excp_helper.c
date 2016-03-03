@@ -48,7 +48,7 @@ static int check_exception(CPUX86State *env, int intno, int *error_code)
     qemu_log_mask(CPU_LOG_INT, "check_exception old: 0x%x new 0x%x\n",
                 env->old_exception, intno);
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     if (env->old_exception == EXCP08_DBLE) {
         if (env->hflags & HF_SVMI_MASK) {
             cpu_vmexit(env, SVM_EXIT_SHUTDOWN, 0); /* does not return */

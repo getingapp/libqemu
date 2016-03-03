@@ -413,7 +413,7 @@ static bool tci_compare64(uint64_t u0, uint64_t u1, TCGCond condition)
     return result;
 }
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 # define qemu_ld_ub \
     helper_ret_ldub_mmu(env, taddr, oi, (uintptr_t)tb_ptr)
 # define qemu_ld_leuw \

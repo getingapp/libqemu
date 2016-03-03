@@ -7,7 +7,6 @@ extern "C" {
 #include <sysemu/cpus.h>
 #include <qemu/main-loop.h>
 #include <qemu/error-report.h>
-#include <qemu.h>
 #include "cpu.h"
 #include <translate-all.h>
 #include <tcg/tcg.h>
@@ -18,17 +17,20 @@ extern "C" {
 #include <llvm/IR/Module.h>
 #include <libqemu/tcg-llvm.h>
 
-int singlestep;
-unsigned long mmap_min_addr;
-THREAD CPUState *thread_cpu;
+//int singlestep = 0;
+//int mem_prealloc = 0;
+
+
+//unsigned long mmap_min_addr;
+CPUState *thread_cpu;
 CPUArchState *env;
-unsigned long reserved_va;
+//unsigned long reserved_va;
 libqemu_load_handler *libqemu_ld = NULL;
 libqemu_store_handler *libqemu_st = NULL;
 static TCGLLVMContext *tcg_llvm_ctx = NULL;
-unsigned long guest_base = 0;
-int have_guest_base = 0;
-char *exec_path;
+//unsigned long guest_base = 0;
+//int have_guest_base = 0;
+//char *exec_path;
 
 int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_handler)
 {

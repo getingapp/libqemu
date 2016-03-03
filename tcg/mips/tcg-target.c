@@ -186,7 +186,7 @@ static int target_parse_constraint(TCGArgConstraint *ct, const char **pct_str)
         ct->ct |= TCG_CT_REG;
         tcg_regset_set(ct->u.regs, 0xffffffff);
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_A0);
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
         if (TARGET_LONG_BITS == 64) {
             tcg_regset_reset_reg(ct->u.regs, TCG_REG_A2);
         }
@@ -196,7 +196,7 @@ static int target_parse_constraint(TCGArgConstraint *ct, const char **pct_str)
         ct->ct |= TCG_CT_REG;
         tcg_regset_set(ct->u.regs, 0xffffffff);
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_A0);
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
         if (TARGET_LONG_BITS == 32) {
             tcg_regset_reset_reg(ct->u.regs, TCG_REG_A1);
         } else {
@@ -938,7 +938,7 @@ static void tcg_out_call(TCGContext *s, tcg_insn_unit *arg)
     tcg_out_nop(s);
 }
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 static void * const qemu_ld_helpers[16] = {
     [MO_UB]   = helper_ret_ldub_mmu,
     [MO_SB]   = helper_ret_ldsb_mmu,
@@ -1253,7 +1253,7 @@ static void tcg_out_qemu_ld(TCGContext *s, const TCGArg *args, bool is_64)
     TCGReg data_regl, data_regh;
     TCGMemOpIdx oi;
     TCGMemOp opc;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     tcg_insn_unit *label_ptr[2];
 #endif
     /* Note that we've eliminated V0 from the output registers,
@@ -1267,7 +1267,7 @@ static void tcg_out_qemu_ld(TCGContext *s, const TCGArg *args, bool is_64)
     oi = *args++;
     opc = get_memop(oi);
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     tcg_out_tlb_load(s, base, addr_regl, addr_regh, oi, label_ptr, 1);
     tcg_out_qemu_ld_direct(s, data_regl, data_regh, base, opc);
     add_qemu_ldst_label(s, 1, oi, data_regl, data_regh, addr_regl, addr_regh,
@@ -1332,7 +1332,7 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is_64)
     TCGReg data_regl, data_regh, base;
     TCGMemOpIdx oi;
     TCGMemOp opc;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     tcg_insn_unit *label_ptr[2];
 #endif
 
@@ -1343,7 +1343,7 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is_64)
     oi = *args++;
     opc = get_memop(oi);
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     /* Note that we eliminated the helper's address argument,
        so we can reuse that for the base.  */
     base = (TARGET_LONG_BITS == 32 ? TCG_REG_A1 : TCG_REG_A2);

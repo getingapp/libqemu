@@ -10,6 +10,9 @@ obj-$(CONFIG_SOFTMMU) += psci.o
 obj-$(TARGET_AARCH64) += cpu64.o translate-a64.o gdbstub64.o
 obj-y += crypto_helper.o
 
+obj-$(CONFIG_LIBQEMU) += machine.o
+obj-$(CONFIG_LIBQEMU) += psci.o
+
 obj-helper-y = op_helper.o helper.o neon_helper.o iwmmxt_helper.o
 obj-helper-$(TARGET_AARCH64) += helper-a64.o
 

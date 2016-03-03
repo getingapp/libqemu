@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 
 typedef struct TCGLabelQemuLdst {
     bool is_ld;             /* qemu_ld: true, qemu_st: false */

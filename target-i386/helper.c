@@ -20,7 +20,7 @@
 #include "cpu.h"
 #include "sysemu/kvm.h"
 #include "kvm_i386.h"
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 #include "sysemu/sysemu.h"
 #include "monitor/monitor.h"
 #include "hw/i386/apic_internal.h"
@@ -178,7 +178,7 @@ done:
     cpu_fprintf(f, "\n");
 }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 
 /* ARRAY_SIZE check is not required because
  * DeliveryMode(dm) has a size of 3 bit.
@@ -675,7 +675,7 @@ void cpu_x86_update_cr4(CPUX86State *env, uint32_t new_cr4)
     env->cr[4] = new_cr4;
 }
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 
 int x86_cpu_handle_mmu_fault(CPUState *cs, vaddr addr,
                              int is_write, int mmu_idx)
@@ -1284,7 +1284,7 @@ int cpu_x86_get_descr_debug(CPUX86State *env, unsigned int selector,
     return 1;
 }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 void do_cpu_init(X86CPU *cpu)
 {
     CPUState *cs = CPU(cpu);
@@ -1341,7 +1341,7 @@ void x86_cpu_exec_exit(CPUState *cs)
     env->eflags = cpu_compute_eflags(env);
 }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 uint8_t x86_ldub_phys(CPUState *cs, hwaddr addr)
 {
     X86CPU *cpu = X86_CPU(cs);

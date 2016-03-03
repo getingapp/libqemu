@@ -441,7 +441,7 @@ void cpu_dump_state(CPUState *cpu, FILE *f, fprintf_function cpu_fprintf,
 void cpu_dump_statistics(CPUState *cpu, FILE *f, fprintf_function cpu_fprintf,
                          int flags);
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 /**
  * cpu_get_phys_page_debug:
  * @cpu: The CPU to obtain the physical page address for.
@@ -610,7 +610,7 @@ bool cpu_throttle_active(void);
  */
 int cpu_throttle_get_percentage(void);
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 
 typedef void (*CPUInterruptHandler)(CPUState *, int);
 
@@ -634,7 +634,7 @@ void cpu_interrupt(CPUState *cpu, int mask);
 
 #endif /* USER_ONLY */
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 static inline void cpu_unassigned_access(CPUState *cpu, hwaddr addr,
                                          bool is_write, bool is_exec,
                                          int opaque, unsigned size)
@@ -761,7 +761,7 @@ void QEMU_NORETURN cpu_abort(CPUState *cpu, const char *fmt, ...)
     GCC_FMT_ATTR(2, 3);
 void cpu_exec_exit(CPUState *cpu);
 
-#if defined(CONFIG_SOFTMMU) 
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU) 
 extern const struct VMStateDescription vmstate_cpu_common;
 #else
 #define vmstate_cpu_common vmstate_dummy

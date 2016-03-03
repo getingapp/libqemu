@@ -26,7 +26,7 @@ typedef enum SemihostingTarget {
     SEMIHOSTING_TARGET_GDB
 } SemihostingTarget;
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 static inline bool semihosting_enabled(void)
 {
     return true;

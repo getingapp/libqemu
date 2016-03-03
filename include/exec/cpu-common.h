@@ -3,7 +3,7 @@
 
 /* CPU interfaces that are target independent.  */
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 #include "exec/hwaddr.h"
 #endif
 
@@ -34,7 +34,7 @@ typedef enum MMUAccessType {
     MMU_INST_FETCH = 2
 } MMUAccessType;
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 
 enum device_endian {
     DEVICE_NATIVE_ENDIAN,

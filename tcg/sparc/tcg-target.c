@@ -83,7 +83,7 @@ static const char * const tcg_target_reg_names[TCG_TARGET_NB_REGS] = {
 #define TCG_REG_T1  TCG_REG_G1
 #define TCG_REG_T2  TCG_REG_O7
 
-#ifndef CONFIG_SOFTMMU
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
 # define TCG_GUEST_BASE_REG TCG_REG_I5
 #endif
 
@@ -825,7 +825,7 @@ static void tcg_out_call(TCGContext *s, tcg_insn_unit *dest)
     tcg_out_nop(s);
 }
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 static tcg_insn_unit *qemu_ld_trampoline[16];
 static tcg_insn_unit *qemu_st_trampoline[16];
 
@@ -953,7 +953,7 @@ static void tcg_target_qemu_prologue(TCGContext *s)
     tcg_out32(s, SAVE | INSN_RD(TCG_REG_O6) | INSN_RS1(TCG_REG_O6) |
               INSN_IMM13(-frame_size));
 
-#ifndef CONFIG_SOFTMMU
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
     if (guest_base != 0) {
         tcg_out_movi(s, TCG_TYPE_PTR, TCG_GUEST_BASE_REG, guest_base);
         tcg_regset_set_reg(s->reserved_regs, TCG_GUEST_BASE_REG);
@@ -966,12 +966,12 @@ static void tcg_target_qemu_prologue(TCGContext *s)
 
     /* No epilogue required.  We issue ret + restore directly in the TB.  */
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     build_trampolines(s);
 #endif
 }
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 /* Perform the TLB load and compare.
 
    Inputs:
@@ -1071,7 +1071,7 @@ static void tcg_out_qemu_ld(TCGContext *s, TCGReg data, TCGReg addr,
                             TCGMemOpIdx oi, bool is_64)
 {
     TCGMemOp memop = get_memop(oi);
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     unsigned memi = get_mmuidx(oi);
     TCGReg addrz, param;
     tcg_insn_unit *func;
@@ -1153,7 +1153,7 @@ static void tcg_out_qemu_st(TCGContext *s, TCGReg data, TCGReg addr,
                             TCGMemOpIdx oi)
 {
     TCGMemOp memop = get_memop(oi);
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     unsigned memi = get_mmuidx(oi);
     TCGReg addrz, param;
     tcg_insn_unit *func;

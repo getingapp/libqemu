@@ -875,7 +875,7 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
             std::vector<Value*> argValues;
             argValues.reserve(nb_iargs);
             Function::arg_iterator curHelperArg = helperFunc->arg_begin();
-            Function::arg_iterator endHelperArg = helperFunc->arg_end();
+            //Function::arg_iterator endHelperArg = helperFunc->arg_end();
 
 
             for(int i=0; i < nb_iargs; ++i) {

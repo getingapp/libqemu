@@ -344,7 +344,7 @@ const char *lookup_symbol(target_ulong orig_addr)
     return symbol;
 }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 
 #include "monitor/monitor.h"
 

@@ -61,7 +61,7 @@ bool use_idiv_instructions;
 #endif
 
 /* ??? Ought to think about changing CONFIG_SOFTMMU to always defined.  */
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 # define USING_SOFTMMU 1
 #else
 # define USING_SOFTMMU 0
@@ -163,7 +163,7 @@ static int target_parse_constraint(TCGArgConstraint *ct, const char **pct_str)
     case 'l':
         ct->ct |= TCG_CT_REG;
         tcg_regset_set32(ct->u.regs, 0, (1 << TCG_TARGET_NB_REGS) - 1);
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
         /* r0-r2,lr will be overwritten when reading the tlb entry,
            so don't use these. */
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_R0);
@@ -181,7 +181,7 @@ static int target_parse_constraint(TCGArgConstraint *ct, const char **pct_str)
            and r0-r1 doing the byte swapping, so don't use these. */
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_R0);
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_R1);
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
         /* Avoid clashes with registers being used for helper args */
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_R2);
 #if TARGET_LONG_BITS == 64
@@ -1048,7 +1048,7 @@ static inline void tcg_out_goto_label(TCGContext *s, int cond, TCGLabel *l)
     }
 }
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 /* helper signature: helper_ret_ld_mmu(CPUState *env, target_ulong addr,
  *                                     int mmu_idx, uintptr_t ra)
  */
@@ -1466,7 +1466,7 @@ static void tcg_out_qemu_ld(TCGContext *s, const TCGArg *args, bool is64)
     TCGReg addrlo, datalo, datahi, addrhi __attribute__((unused));
     TCGMemOpIdx oi;
     TCGMemOp opc;
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     int mem_index;
     TCGReg addend;
     tcg_insn_unit *label_ptr;
@@ -1479,7 +1479,7 @@ static void tcg_out_qemu_ld(TCGContext *s, const TCGArg *args, bool is64)
     oi = *args++;
     opc = get_memop(oi);
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     mem_index = get_mmuidx(oi);
     addend = tcg_out_tlb_read(s, addrlo, addrhi, opc & MO_SIZE, mem_index, 1);
 
@@ -1597,7 +1597,7 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is64)
     TCGReg addrlo, datalo, datahi, addrhi __attribute__((unused));
     TCGMemOpIdx oi;
     TCGMemOp opc;
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     int mem_index;
     TCGReg addend;
     tcg_insn_unit *label_ptr;
@@ -1610,7 +1610,7 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is64)
     oi = *args++;
     opc = get_memop(oi);
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     mem_index = get_mmuidx(oi);
     addend = tcg_out_tlb_read(s, addrlo, addrhi, opc & MO_SIZE, mem_index, 0);
 

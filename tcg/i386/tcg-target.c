@@ -1127,7 +1127,7 @@ static void tcg_out_jmp(TCGContext *s, tcg_insn_unit *dest)
     tcg_out_branch(s, 0, dest);
 }
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 /* helper signature: helper_ret_ld_mmu(CPUState *env, target_ulong addr,
  *                                     int mmu_idx, uintptr_t ra)
  */
@@ -1558,7 +1558,7 @@ static void tcg_out_qemu_ld(TCGContext *s, const TCGArg *args, bool is64)
     TCGReg addrhi __attribute__((unused));
     TCGMemOpIdx oi;
     TCGMemOp opc;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     int mem_index;
     tcg_insn_unit *label_ptr[2];
 #endif
@@ -1570,7 +1570,7 @@ static void tcg_out_qemu_ld(TCGContext *s, const TCGArg *args, bool is64)
     oi = *args++;
     opc = get_memop(oi);
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     mem_index = get_mmuidx(oi);
 
     tcg_out_tlb_load(s, addrlo, addrhi, mem_index, opc,
@@ -1698,7 +1698,7 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is64)
     TCGReg addrhi __attribute__((unused));
     TCGMemOpIdx oi;
     TCGMemOp opc;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     int mem_index;
     tcg_insn_unit *label_ptr[2];
 #endif
@@ -1710,7 +1710,7 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is64)
     oi = *args++;
     opc = get_memop(oi);
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     mem_index = get_mmuidx(oi);
 
     tcg_out_tlb_load(s, addrlo, addrhi, mem_index, opc,
@@ -2321,7 +2321,7 @@ static void tcg_target_qemu_prologue(TCGContext *s)
     }
     tcg_out_opc(s, OPC_RET, 0, 0, 0);
 
-#if !defined(CONFIG_SOFTMMU)
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
     /* Try to set up a segment register to point to guest_base.  */
     if (guest_base) {
         setup_guest_base_seg();

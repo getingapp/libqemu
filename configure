@@ -5946,7 +5946,7 @@ if test "$target_bsd_user" = "yes" ; then
 fi
 
 if test "$target_lib" = "yes" ; then
-  echo "QEMU_CFLAGS+=-fPIC" >> $config_host_mak
+  echo "QEMU_CFLAGS+=-fPIC -Wno-extern-c-compat" >> $config_host_mak
   echo "CONFIG_LIBQEMU=y" >> $config_target_mak
 fi
 
@@ -6081,6 +6081,7 @@ DIRS="$DIRS fsdev"
 DIRS="$DIRS pc-bios/optionrom pc-bios/spapr-rtas pc-bios/s390-ccw"
 DIRS="$DIRS roms/seabios roms/vgabios"
 DIRS="$DIRS qapi-generated"
+DIRS="$DIRS $target_dir/libqemu"
 FILES="Makefile tests/tcg/Makefile qdict-test-data.txt"
 FILES="$FILES tests/tcg/cris/Makefile tests/tcg/cris/.gdbinit"
 FILES="$FILES tests/tcg/lm32/Makefile tests/tcg/xtensa/Makefile po/Makefile"

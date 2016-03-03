@@ -51,7 +51,7 @@
 /* A scratch register that may be be used throughout the backend.  */
 #define TCG_TMP0        TCG_REG_R14
 
-#ifndef CONFIG_SOFTMMU
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
 #define TCG_GUEST_BASE_REG TCG_REG_R13
 #endif
 
@@ -304,7 +304,7 @@ static const uint8_t tcg_cond_to_ltr_cond[] = {
     [TCG_COND_GEU] = S390_CC_ALWAYS,
 };
 
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 static void * const qemu_ld_helpers[16] = {
     [MO_UB]   = helper_ret_ldub_mmu,
     [MO_SB]   = helper_ret_ldsb_mmu,
@@ -1485,7 +1485,7 @@ static void tcg_out_qemu_st_direct(TCGContext *s, TCGMemOp opc, TCGReg data,
     }
 }
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 /* We're expecting to use a 20-bit signed offset on the tlb memory ops.
    Using the offset of the second entry in the last tlb table ensures
    that we can index all of the elements of the first entry.  */
@@ -1645,7 +1645,7 @@ static void tcg_out_qemu_ld(TCGContext* s, TCGReg data_reg, TCGReg addr_reg,
                             TCGMemOpIdx oi)
 {
     TCGMemOp opc = get_memop(oi);
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     unsigned mem_index = get_mmuidx(oi);
     tcg_insn_unit *label_ptr;
     TCGReg base_reg;
@@ -1673,7 +1673,7 @@ static void tcg_out_qemu_st(TCGContext* s, TCGReg data_reg, TCGReg addr_reg,
                             TCGMemOpIdx oi)
 {
     TCGMemOp opc = get_memop(oi);
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     unsigned mem_index = get_mmuidx(oi);
     tcg_insn_unit *label_ptr;
     TCGReg base_reg;
@@ -2342,7 +2342,7 @@ static void tcg_target_qemu_prologue(TCGContext *s)
                   TCG_STATIC_CALL_ARGS_SIZE + TCG_TARGET_CALL_STACK_OFFSET,
                   CPU_TEMP_BUF_NLONGS * sizeof(long));
 
-#ifndef CONFIG_SOFTMMU
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
     if (guest_base >= 0x80000) {
         tcg_out_movi(s, TCG_TYPE_PTR, TCG_GUEST_BASE_REG, guest_base);
         tcg_regset_set_reg(s->reserved_regs, TCG_GUEST_BASE_REG);

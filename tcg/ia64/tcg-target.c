@@ -40,7 +40,7 @@ static const char * const tcg_target_reg_names[TCG_TARGET_NB_REGS] = {
 };
 #endif
 
-#ifndef CONFIG_SOFTMMU
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
 #define TCG_GUEST_BASE_REG TCG_REG_R55
 #endif
 
@@ -736,7 +736,7 @@ static int target_parse_constraint(TCGArgConstraint *ct, const char **pct_str)
     case 'S':
         ct->ct |= TCG_CT_REG;
         tcg_regset_set(ct->u.regs, 0xffffffffffffffffull);
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_R56);
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_R57);
         tcg_regset_reset_reg(ct->u.regs, TCG_REG_R58);
@@ -1475,7 +1475,7 @@ static inline void tcg_out_movcond(TCGContext *s, TCGCond cond, TCGArg ret,
                    opc2);
 }
 
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 /* We're expecting to use an signed 22-bit immediate add.  */
 QEMU_BUILD_BUG_ON(offsetof(CPUArchState, tlb_table[NB_MMU_MODES - 1][1])
                   > 0x1fffff)

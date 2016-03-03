@@ -38,7 +38,7 @@ io-obj-y = io/
 # suppress *all* target specific code in case of system emulation, i.e. a
 # single QEMU executable should support all CPUs and machines.
 
-ifeq ($(CONFIG_SOFTMMU),y) 
+ifeq ($(call lor $(CONFIG_SOFTMMU),$(CONFIG_LIBQEMU)),y) 
 common-obj-y = blockdev.o blockdev-nbd.o block/
 common-obj-y += iothread.o
 common-obj-y += net/
@@ -66,8 +66,10 @@ common-obj-y += bt-host.o bt-vhci.o
 bt-host.o-cflags := $(BLUEZ_CFLAGS)
 
 common-obj-y += dma-helpers.o
+#ifneq ($(CONFIG_LIBQEMU),y)
 common-obj-y += vl.o
 vl.o-cflags := $(GPROF_CFLAGS) $(SDL_CFLAGS)
+#endif
 common-obj-y += tpm.o
 
 common-obj-$(CONFIG_SLIRP) += slirp/
@@ -80,10 +82,11 @@ common-obj-$(CONFIG_FDT) += device_tree.o
 
 ######################################################################
 # qapi
-
+#ifneq ($(CONFIG_LIBQEMU), y)
 common-obj-y += qmp-marshal.o
 common-obj-y += qmp-introspect.o
 common-obj-y += qmp.o hmp.o
+#endif
 endif
 
 #######################################################################

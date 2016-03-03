@@ -28,7 +28,7 @@ CPUState *tcg_current_cpu;
 /* exit the current TB from a signal handler. The host registers are
    restored in a state compatible with the CPU emulator
  */
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 void cpu_resume_from_signal(CPUState *cpu, void *puc)
 {
     /* XXX: restore cpu registers saved in host registers */

@@ -132,7 +132,7 @@ static void fpu_raise_exception(CPUX86State *env, uintptr_t retaddr)
     if (env->cr[0] & CR0_NE_MASK) {
         raise_exception_ra(env, EXCP10_COPR, retaddr);
     }
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     else {
         cpu_set_ferr(env);
     }
@@ -1102,7 +1102,7 @@ void helper_frstor(CPUX86State *env, target_ulong ptr, int data32)
     }
 }
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 void cpu_x86_fsave(CPUX86State *env, target_ulong ptr, int data32)
 {
     helper_fsave(env, ptr, data32);

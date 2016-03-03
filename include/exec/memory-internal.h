@@ -19,7 +19,7 @@
 #ifndef MEMORY_INTERNAL_H
 #define MEMORY_INTERNAL_H
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 typedef struct AddressSpaceDispatch AddressSpaceDispatch;
 
 void address_space_init_dispatch(AddressSpace *as);

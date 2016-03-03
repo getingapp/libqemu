@@ -177,11 +177,17 @@ qemu-options.def: $(SRC_PATH)/qemu-options.hx
 
 SUBDIR_RULES=$(patsubst %,subdir-%, $(TARGET_DIRS))
 SOFTMMU_SUBDIR_RULES=$(filter %-softmmu,$(SUBDIR_RULES))
+LIBQEMU_SUBDIR_RULES=$(filter %-lib,$(SUBDIR_RULES))
 
 $(SOFTMMU_SUBDIR_RULES): $(block-obj-y)
 $(SOFTMMU_SUBDIR_RULES): $(crypto-obj-y)
 $(SOFTMMU_SUBDIR_RULES): $(io-obj-y)
 $(SOFTMMU_SUBDIR_RULES): config-all-devices.mak
+
+$(LIBQEMU_SUBDIR_RULES): $(block-obj-y)
+$(LIBQEMU_SUBDIR_RULES): $(crypto-obj-y)
+$(LIBQEMU_SUBDIR_RULES): $(io-obj-y)
+$(LIBQEMU_SUBDIR_RULES): config-all-devices.mak
 
 subdir-%:
 	$(call quiet-command,$(MAKE) $(SUBDIR_MAKEFLAGS) -C $* V="$(V)" TARGET_DIR="$*/" all,)

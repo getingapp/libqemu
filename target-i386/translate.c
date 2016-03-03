@@ -7932,7 +7932,7 @@ void gen_intermediate_code(CPUX86State *env, TranslationBlock *tb)
     dc->flags = flags;
     dc->jmp_opt = !(dc->tf || cs->singlestep_enabled ||
                     (flags & HF_INHIBIT_IRQ_MASK)
-#ifndef CONFIG_SOFTMMU
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
                     || (flags & HF_SOFTMMU_MASK)
 #endif
                     );

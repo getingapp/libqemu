@@ -953,7 +953,7 @@ void tcg_register_jit(void *buf, size_t buf_size);
 /*
  * Memory helpers that will be used by TCG generated code.
  */
-#ifdef CONFIG_SOFTMMU
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
 /* Value zero-extended to tcg register size.  */
 tcg_target_ulong helper_ret_ldub_mmu(CPUArchState *env, target_ulong addr,
                                      TCGMemOpIdx oi, uintptr_t retaddr);

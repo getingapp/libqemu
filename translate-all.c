@@ -36,7 +36,7 @@
 #include "trace.h"
 #include "disas/disas.h"
 #include "tcg.h"
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 #include "qemu.h"
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <sys/param.h>
@@ -68,7 +68,7 @@
 /* make various TB consistency checks */
 //#define DEBUG_TB_CHECK
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 /* TB consistency checks only implemented for usermode emulation.  */
 #undef DEBUG_TB_CHECK
 #endif
@@ -82,14 +82,14 @@ typedef struct PageDesc {
        of lookups we do to a given page to use a bitmap */
     unsigned int code_write_count;
     unsigned long *code_bitmap;
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     unsigned long flags;
 #endif
 } PageDesc;
 
 /* In system mode we want L1_MAP to be based on ram offsets,
    while in user mode we want it to be based on virtual addresses.  */
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 #if HOST_LONG_BITS < TARGET_PHYS_ADDR_SPACE_BITS
 # define L1_MAP_ADDR_SPACE_BITS  HOST_LONG_BITS
 #else
@@ -127,13 +127,13 @@ static void *l1_map[V_L1_SIZE];
 TCGContext tcg_ctx;
 
 /* translation block context */
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 __thread int have_tb_lock;
 #endif
 
 void tb_lock(void)
 {
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     assert(!have_tb_lock);
     qemu_mutex_lock(&tcg_ctx.tb_ctx.tb_lock);
     have_tb_lock++;
@@ -142,7 +142,7 @@ void tb_lock(void)
 
 void tb_unlock(void)
 {
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     assert(have_tb_lock);
     have_tb_lock--;
     qemu_mutex_unlock(&tcg_ctx.tb_ctx.tb_lock);
@@ -151,7 +151,7 @@ void tb_unlock(void)
 
 void tb_lock_reset(void)
 {
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     if (have_tb_lock) {
         qemu_mutex_unlock(&tcg_ctx.tb_ctx.tb_lock);
         have_tb_lock = 0;
@@ -449,7 +449,7 @@ static inline PageDesc *page_find(tb_page_addr_t index)
     return page_find_alloc(index, 0);
 }
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 /* Currently it is not recommended to allocate big chunks of data in
    user mode. It will change when a dedicated libc will be used.  */
 /* ??? 64-bit hosts ought to have no problem mmaping data outside the
@@ -749,7 +749,7 @@ void tcg_exec_init(unsigned long tb_size)
     cpu_gen_init();
     page_init();
     code_gen_alloc(tb_size);
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     /* There's no guest base to take into account, so go ahead and
        initialize the prologue now.  */
     tcg_prologue_init(&tcg_ctx);
@@ -1281,7 +1281,7 @@ void tb_invalidate_phys_page_range(tb_page_addr_t start, tb_page_addr_t end,
         }
         tb = tb_next;
     }
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     /* if no code remaining, no need to continue to use slow writes */
     if (!p->first_tb) {
         invalidate_page_bitmap(p);
@@ -1338,7 +1338,7 @@ void tb_invalidate_phys_page_fast(tb_page_addr_t start, int len)
     }
 }
 
-#if !defined(CONFIG_SOFTMMU)
+#if !defined(CONFIG_SOFTMMU) && !defined(CONFIG_LIBQEMU)
 /* Called with mmap_lock held.  */
 static void tb_invalidate_phys_page(tb_page_addr_t addr,
                                     uintptr_t pc, void *puc,
@@ -1417,20 +1417,20 @@ static inline void tb_alloc_page(TranslationBlock *tb,
                                  unsigned int n, tb_page_addr_t page_addr)
 {
     PageDesc *p;
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     bool page_already_protected;
 #endif
 
     tb->page_addr[n] = page_addr;
     p = page_find_alloc(page_addr >> TARGET_PAGE_BITS, 1);
     tb->page_next[n] = p->first_tb;
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     page_already_protected = p->first_tb != NULL;
 #endif
     p->first_tb = (TranslationBlock *)((uintptr_t)tb | n);
     invalidate_page_bitmap(p);
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     if (p->flags & PAGE_WRITE) {
         target_ulong addr;
         PageDesc *p2;
@@ -1542,7 +1542,7 @@ static TranslationBlock *tb_find_pc(uintptr_t tc_ptr)
     return &tcg_ctx.tb_ctx.tbs[m_max];
 }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 void tb_invalidate_phys_addr(AddressSpace *as, hwaddr addr)
 {
     ram_addr_t ram_addr;
@@ -1586,7 +1586,7 @@ void tb_check_watchpoint(CPUState *cpu)
     }
 }
 
-#if !defined(CONFIG_USER_ONLY) &&  !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 /* in deterministic execution mode, instructions doing device I/Os
    must be at the end of the TB */
 void cpu_io_recompile(CPUState *cpu, uintptr_t retaddr)

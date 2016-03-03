@@ -19,7 +19,7 @@
 #ifndef RAM_ADDR_H
 #define RAM_ADDR_H
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
 #include "hw/xen/xen.h"
 
 struct RAMBlock {

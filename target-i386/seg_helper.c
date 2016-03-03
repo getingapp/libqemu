@@ -22,6 +22,7 @@
 #include "qemu/log.h"
 #include "exec/helper-proto.h"
 #include "exec/cpu_ldst.h"
+#include "tcg/tcg.h"
 
 //#define DEBUG_PCALL
 
@@ -34,7 +35,7 @@
 # define LOG_PCALL_STATE(cpu) do { } while (0)
 #endif
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 #define MEMSUFFIX _kernel
 #define DATA_SIZE 1
 #include "exec/cpu_ldst_useronly_template.h"
@@ -498,7 +499,7 @@ static void switch_tss_ra(CPUX86State *env, int tss_selector,
         raise_exception_err_ra(env, EXCP0D_GPF, 0, retaddr);
     }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     /* reset local breakpoints */
     if (env->dr[7] & DR7_LOCAL_BP_MASK) {
         cpu_x86_update_dr7(env, env->dr[7] & ~DR7_LOCAL_BP_MASK);
@@ -967,7 +968,7 @@ static void do_interrupt64(CPUX86State *env, int intno, int is_int,
 #endif
 
 #ifdef TARGET_X86_64
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 void helper_syscall(CPUX86State *env, int next_eip_addend)
 {
     CPUState *cs = CPU(x86_env_get_cpu(env));
@@ -1125,7 +1126,7 @@ static void do_interrupt_real(CPUX86State *env, int intno, int is_int,
     env->eflags &= ~(IF_MASK | TF_MASK | AC_MASK | RF_MASK);
 }
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 /* fake user mode interrupt */
 static void do_interrupt_user(CPUX86State *env, int intno, int is_int,
                               int error_code, target_ulong next_eip)
@@ -1235,7 +1236,7 @@ static void do_interrupt_all(X86CPU *cpu, int intno, int is_int,
         }
     }
     if (env->cr[0] & CR0_PE_MASK) {
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
         if (env->hflags & HF_SVMI_MASK) {
             handle_even_inj(env, intno, is_int, error_code, is_hw, 0);
         }
@@ -1250,7 +1251,7 @@ static void do_interrupt_all(X86CPU *cpu, int intno, int is_int,
                                    is_hw);
         }
     } else {
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
         if (env->hflags & HF_SVMI_MASK) {
             handle_even_inj(env, intno, is_int, error_code, is_hw, 1);
         }
@@ -1258,7 +1259,7 @@ static void do_interrupt_all(X86CPU *cpu, int intno, int is_int,
         do_interrupt_real(env, intno, is_int, error_code, next_eip);
     }
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     if (env->hflags & HF_SVMI_MASK) {
         CPUState *cs = CPU(cpu);
         uint32_t event_inj = x86_ldl_phys(cs, env->vm_vmcb +
@@ -1277,7 +1278,7 @@ void x86_cpu_do_interrupt(CPUState *cs)
     X86CPU *cpu = X86_CPU(cs);
     CPUX86State *env = &cpu->env;
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
     /* if user mode only, we simulate a fake exception
        which will be handled outside the cpu execution
        loop */
@@ -1311,7 +1312,7 @@ bool x86_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
     CPUX86State *env = &cpu->env;
     bool ret = false;
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
     if (interrupt_request & CPU_INTERRUPT_POLL) {
         cs->interrupt_request &= ~CPU_INTERRUPT_POLL;
         apic_poll_irq(cpu->apic_state);
@@ -1356,7 +1357,7 @@ bool x86_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
             /* ensure that no TB jump will be modified as
                the program flow was changed */
             ret = true;
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU)
+#if !defined(CONFIG_USER_ONLY)
         } else if ((interrupt_request & CPU_INTERRUPT_VIRQ) &&
                    (env->eflags & IF_MASK) &&
                    !(env->hflags & HF_INHIBIT_IRQ_MASK)) {
@@ -2573,7 +2574,7 @@ void helper_verw(CPUX86State *env, target_ulong selector1)
     CC_SRC = eflags | CC_Z;
 }
 
-#if defined(CONFIG_USER_ONLY) || defined(CONFIG_LIBQEMU)
+#if defined(CONFIG_USER_ONLY)
 void cpu_x86_load_seg(CPUX86State *env, int seg_reg, int selector)
 {
     if (!(env->cr[0] & CR0_PE_MASK) || (env->eflags & VM_MASK)) {

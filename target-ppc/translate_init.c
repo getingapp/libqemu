@@ -5157,7 +5157,7 @@ POWERPC_FAMILY(601)(ObjectClass *oc, void *data)
                     (1ull << MSR_IR) |
                     (1ull << MSR_DR);
     pcc->mmu_model = POWERPC_MMU_601;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_601;
@@ -5202,7 +5202,7 @@ POWERPC_FAMILY(601v)(ObjectClass *oc, void *data)
                     (1ull << MSR_IR) |
                     (1ull << MSR_DR);
     pcc->mmu_model = POWERPC_MMU_601;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->bus_model = PPC_FLAGS_INPUT_6xx;
@@ -5464,7 +5464,7 @@ POWERPC_FAMILY(604)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_604;
@@ -5547,7 +5547,7 @@ POWERPC_FAMILY(604E)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_604;
@@ -5617,7 +5617,7 @@ POWERPC_FAMILY(740)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_7x0;
@@ -5695,7 +5695,7 @@ POWERPC_FAMILY(750)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_7x0;
@@ -5896,7 +5896,7 @@ POWERPC_FAMILY(750cl)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_7x0;
@@ -5978,7 +5978,7 @@ POWERPC_FAMILY(750cx)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_7x0;
@@ -6065,7 +6065,7 @@ POWERPC_FAMILY(750fx)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_7x0;
@@ -6152,7 +6152,7 @@ POWERPC_FAMILY(750gx)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_7x0;
@@ -6390,7 +6390,7 @@ POWERPC_FAMILY(7400)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_74xx;
@@ -6474,7 +6474,7 @@ POWERPC_FAMILY(7410)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_74xx;
@@ -7291,7 +7291,7 @@ POWERPC_FAMILY(e600)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_32B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash32_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_74xx;
@@ -7968,7 +7968,7 @@ POWERPC_FAMILY(970)(ObjectClass *oc, void *data)
                     (1ull << MSR_PMM) |
                     (1ull << MSR_RI);
     pcc->mmu_model = POWERPC_MMU_64B;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash64_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_970;
@@ -8021,7 +8021,7 @@ POWERPC_FAMILY(POWER5P)(ObjectClass *oc, void *data)
                     (1ull << MSR_PMM) |
                     (1ull << MSR_RI);
     pcc->mmu_model = POWERPC_MMU_2_03;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash64_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_970;
@@ -8165,7 +8165,7 @@ POWERPC_FAMILY(POWER7)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_2_06;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash64_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_POWER7;
@@ -8245,7 +8245,7 @@ POWERPC_FAMILY(POWER8)(ObjectClass *oc, void *data)
                     (1ull << MSR_RI) |
                     (1ull << MSR_LE);
     pcc->mmu_model = POWERPC_MMU_2_07;
-#if defined(CONFIG_SOFTMMU)
+#if defined(CONFIG_SOFTMMU) || defined(CONFIG_LIBQEMU)
     pcc->handle_mmu_fault = ppc_hash64_handle_mmu_fault;
 #endif
     pcc->excp_model = POWERPC_EXCP_POWER7;

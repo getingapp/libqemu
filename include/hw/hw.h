@@ -4,7 +4,7 @@
 
 #include "qemu-common.h"
 
-#if !defined(CONFIG_USER_ONLY) && !defined(CONFIG_LIBQEMU) && !defined(NEED_CPU_H)
+#if !defined(CONFIG_USER_ONLY) && !defined(NEED_CPU_H)
 #include "exec/cpu-common.h"
 #endif
 

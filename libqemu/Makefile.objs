@@ -1,3 +1,4 @@
-obj-y = stubs.o uaccess.o mmap.o qemu-lib.o signal.o passes/
-obj-$(TARGET_I386) += vm86.o
-obj-y += syscall.o uname.o
+#obj-y = stubs.o uaccess.o mmap.o qemu-lib.o signal.o passes/
+obj-y = qemu-lib.o passes/
+#obj-$(TARGET_I386) += vm86.o
+#obj-y += syscall.o uname.o
