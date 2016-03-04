@@ -1198,6 +1198,8 @@ for opt do
   ;;
   --with-llvm-config=*) llvm_config="$optarg"
   ;;
+  --enable-llvm-shared) llvm_shared="yes"
+  ;;
   *)
       echo "ERROR: unknown option $opt"
       echo "Try '$0 --help' for more information"
@@ -3368,8 +3370,11 @@ EOF
   llvm_ldflags=$( $llvm_config --ldflags 2> /dev/null )
   llvm_component_libs=$( $llvm_config --libs $llvm_components 2> /dev/null )
   llvm_system_libs=$( $llvm_config --system-libs 2> /dev/null )
-  #llvm_libs="${llvm_component_libs} ${llvm_system_libs}"
-  llvm_libs="-lLLVM-3.5 ${llvm_system_libs}"
+  if test x"$llvm_shared" = x"yes"; then
+    llvm_libs="-lLLVM-${llvm_version_major_required}.${llvm_version_minor_required} ${llvm_system_libs}"
+  else
+    llvm_libs="${llvm_component_libs} ${llvm_system_libs}"
+  fi
   llvm_link=$( $llvm_config --bindir )/llvm-link
   if compile_prog_cxx "$llvm_cxxflags" "$llvm_libs $llvm_ldflags"; then
     llvm=yes
