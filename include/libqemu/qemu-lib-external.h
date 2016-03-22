@@ -54,6 +54,29 @@ typedef union CodeFlags
     uint64_t _value;
 } CodeFlags;
 
+/* Taken from TCGMemOp in tcg/tcg.h. 
+   Needs to be kept synchronous with the structure there.
+   Constants for qemu_ld and qemu_st for the Memory Operation field.  */
+typedef enum LibqemuMemOp {
+    LQ_MO_8     = 0,
+    LQ_MO_16    = 1,
+    LQ_MO_32    = 2,
+    LQ_MO_64    = 3,
+    LQ_MO_SIZE  = 3,   /* Mask for the above.  */
+
+    LQ_MO_SIGN  = 4,   /* Sign-extended, otherwise zero-extended.  */
+
+    LQ_MO_BSWAP = 8,   /* Host reverse endian.  */
+
+    /* MO_UNALN accesses are never checked for alignment.
+       MO_ALIGN accesses will result in a call to the CPU's
+       do_unaligned_access hook if the guest address is not aligned.
+       The default depends on whether the target CPU defines ALIGNED_ONLY.  */
+    LQ_MO_AMASK = 16,
+
+    LQ_MO_CODE = 128
+} LibqemuMemOp;
+
 /**
  * Initialize the library.
  * @param ld_handler Handler function for memory read accesses.

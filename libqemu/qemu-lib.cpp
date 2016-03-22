@@ -56,7 +56,7 @@ int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_han
         cpu_model = "qemu32";
 #endif
 #elif defined(TARGET_ARM)
-        cpu_model = "any";
+        cpu_model = "cortex-a8";
 #elif defined(TARGET_UNICORE32)
         cpu_model = "any";
 #elif defined(TARGET_M68K)

@@ -1489,8 +1489,8 @@ void TCGLLVMContextPrivate::replaceEntryBB(llvm::Function &f)
     llvm::BasicBlock *successor = branch->getSuccessor(0);
     assert(branch);
     if (successor->getUniquePredecessor()) {
-        successor->eraseFromParent();
         bb->eraseFromParent();
+        successor->eraseFromParent();
     } else {
         bb->eraseFromParent();
         if (successor->getUniquePredecessor()) {

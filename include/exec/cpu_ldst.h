@@ -79,46 +79,7 @@
 #endif
 
 
-#if defined(CONFIG_LIBQEMU)
-#include <libqemu/qemu-lib.h>
-
-/* In user-only mode we provide only the _code and _data accessors. */
-
-#define MEMSUFFIX _data
-#define IS_CODE_ACCESS false
-#define DATA_SIZE 1
-#include "exec/cpu_ldst_libqemu_template.h"
-
-#define DATA_SIZE 2
-#include "exec/cpu_ldst_libqemu_template.h"
-
-#define DATA_SIZE 4
-#include "exec/cpu_ldst_libqemu_template.h"
-
-#define DATA_SIZE 8
-#include "exec/cpu_ldst_libqemu_template.h"
-#undef MEMSUFFIX
-#undef IS_CODE_ACCESS
-
-#define MEMSUFFIX _code
-#define CODE_ACCESS
-#define IS_CODE_ACCESS true
-#define DATA_SIZE 1
-#include "exec/cpu_ldst_libqemu_template.h"
-
-#define DATA_SIZE 2
-#include "exec/cpu_ldst_libqemu_template.h"
-
-#define DATA_SIZE 4
-#include "exec/cpu_ldst_libqemu_template.h"
-
-#define DATA_SIZE 8
-#include "exec/cpu_ldst_libqemu_template.h"
-#undef MEMSUFFIX
-#undef CODE_ACCESS
-#undef IS_CODE_ACCESS
-
-#elif defined(CONFIG_USER_ONLY) 
+#if defined(CONFIG_USER_ONLY) 
 
 /* In user-only mode we provide only the _code and _data accessors. */
 
@@ -151,6 +112,281 @@
 #include "exec/cpu_ldst_useronly_template.h"
 #undef MEMSUFFIX
 #undef CODE_ACCESS
+
+#elif defined(CONFIG_LIBQEMU)
+
+#include <libqemu/qemu-lib-internal.h>
+
+/* The memory helpers for tcg-generated code need tcg_target_long etc.  */
+#include "tcg.h"
+#include "exec/helper-proto.h"
+
+#ifdef MMU_MODE0_SUFFIX
+#define CPU_MMU_INDEX 0
+#define MEMSUFFIX MMU_MODE0_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif
+
+#if (NB_MMU_MODES >= 2) && defined(MMU_MODE1_SUFFIX)
+#define CPU_MMU_INDEX 1
+#define MEMSUFFIX MMU_MODE1_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif
+
+#if (NB_MMU_MODES >= 3) && defined(MMU_MODE2_SUFFIX)
+
+#define CPU_MMU_INDEX 2
+#define MEMSUFFIX MMU_MODE2_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 3) */
+
+#if (NB_MMU_MODES >= 4) && defined(MMU_MODE3_SUFFIX)
+
+#define CPU_MMU_INDEX 3
+#define MEMSUFFIX MMU_MODE3_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 4) */
+
+#if (NB_MMU_MODES >= 5) && defined(MMU_MODE4_SUFFIX)
+
+#define CPU_MMU_INDEX 4
+#define MEMSUFFIX MMU_MODE4_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 5) */
+
+#if (NB_MMU_MODES >= 6) && defined(MMU_MODE5_SUFFIX)
+
+#define CPU_MMU_INDEX 5
+#define MEMSUFFIX MMU_MODE5_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 6) */
+
+#if (NB_MMU_MODES >= 7) && defined(MMU_MODE6_SUFFIX)
+
+#define CPU_MMU_INDEX 6
+#define MEMSUFFIX MMU_MODE6_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 7) */
+
+#if (NB_MMU_MODES >= 8) && defined(MMU_MODE7_SUFFIX)
+
+#define CPU_MMU_INDEX 7
+#define MEMSUFFIX MMU_MODE7_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 8) */
+
+#if (NB_MMU_MODES >= 9) && defined(MMU_MODE8_SUFFIX)
+
+#define CPU_MMU_INDEX 8
+#define MEMSUFFIX MMU_MODE8_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 9) */
+
+#if (NB_MMU_MODES >= 10) && defined(MMU_MODE9_SUFFIX)
+
+#define CPU_MMU_INDEX 9
+#define MEMSUFFIX MMU_MODE9_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 10) */
+
+#if (NB_MMU_MODES >= 11) && defined(MMU_MODE10_SUFFIX)
+
+#define CPU_MMU_INDEX 10
+#define MEMSUFFIX MMU_MODE10_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 11) */
+
+#if (NB_MMU_MODES >= 12) && defined(MMU_MODE11_SUFFIX)
+
+#define CPU_MMU_INDEX 11
+#define MEMSUFFIX MMU_MODE11_SUFFIX
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#endif /* (NB_MMU_MODES >= 12) */
+
+#if (NB_MMU_MODES > 12)
+#error "NB_MMU_MODES > 12 is not supported for now"
+#endif /* (NB_MMU_MODES > 12) */
+
+/* these access are slower, they must be as rare as possible */
+#define CPU_MMU_INDEX (cpu_mmu_index(env, false))
+#define MEMSUFFIX _data
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+
+#define CPU_MMU_INDEX (cpu_mmu_index(env, true))
+#define MEMSUFFIX _code
+#define SOFTMMU_CODE_ACCESS
+
+#define DATA_SIZE 1
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 2
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 4
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#define DATA_SIZE 8
+#include "exec/cpu_ldst_libqemu_template.h"
+
+#undef CPU_MMU_INDEX
+#undef MEMSUFFIX
+#undef SOFTMMU_CODE_ACCESS
 
 #else
 

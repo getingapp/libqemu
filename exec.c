@@ -60,6 +60,12 @@
 #include "qemu/mmap-alloc.h"
 #endif
 
+#if defined(CONFIG_LIBQEMU)
+#include "libqemu/qemu-lib.h"
+#include "exec/helper-proto.h"
+#include "tcg/tcg.h"
+#endif /* defined(CONFIG_LIBQEMU) */
+
 //#define DEBUG_SUBPAGE
 
 #if !defined(CONFIG_USER_ONLY)
@@ -3563,6 +3569,14 @@ int cpu_memory_rw_debug(CPUState *cpu, target_ulong addr,
     int l;
     hwaddr phys_addr;
     target_ulong page;
+#if defined(CONFIG_LIBQEMU)
+    if (!is_write && libqemu_ld) {
+        for (l = 0; l < len; ++l) {
+            buf[l] = helper_libqemu_ld(cpu->env_ptr, addr + l, MO_8, 0);
+        }
+        return 0;
+    }
+#endif /* defined(CONFIG_LIBQEMU) */
 
     while (len > 0) {
         page = addr & TARGET_PAGE_MASK;

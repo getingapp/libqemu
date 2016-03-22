@@ -352,6 +352,7 @@ vhdx=""
 numa=""
 tcmalloc="no"
 jemalloc="no"
+llvm_shared="no"
 
 # parse CC options first
 for opt do

@@ -38,7 +38,7 @@ io-obj-y = io/
 # suppress *all* target specific code in case of system emulation, i.e. a
 # single QEMU executable should support all CPUs and machines.
 
-ifeq ($(call lor $(CONFIG_SOFTMMU),$(CONFIG_LIBQEMU)),y) 
+ifeq ($(call lor,$(CONFIG_SOFTMMU),$(CONFIG_LIBQEMU)),y) 
 common-obj-y = blockdev.o blockdev-nbd.o block/
 common-obj-y += iothread.o
 common-obj-y += net/

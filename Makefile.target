@@ -201,6 +201,7 @@ tcg-llvm.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
 
 libqemu/qemu-lib.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) $(LLVM_CFLAGS)
 libqemu/qemu-lib.o: QEMU_LDFLAGS += $(LLVM_LDFLAGS) $(LLVM_LIBS)
+libqemu/helper.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) $(LLVM_CFLAGS)
 libqemu/passes/CpuArchStructInfo.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) -std=c++11
 libqemu/passes/SanitizeEnv.o: QEMU_CXXFLAGS += $(LLVM_CXXFLAGS) -std=c++11
 
