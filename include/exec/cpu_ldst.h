@@ -115,8 +115,6 @@
 
 #elif defined(CONFIG_LIBQEMU)
 
-#include <libqemu/qemu-lib-internal.h>
-
 /* The memory helpers for tcg-generated code need tcg_target_long etc.  */
 #include "tcg.h"
 #include "exec/helper-proto.h"
