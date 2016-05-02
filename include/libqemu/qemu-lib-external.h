@@ -85,6 +85,7 @@ typedef enum LibqemuMemOp {
  * @return 0 on success or error code.
  */ 
 int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_handler);
+typedef int(*libqemu_init_fn)(libqemu_load_handler*, libqemu_store_handler);
 
 /**
  * Get the LLVM module that the code is translated into.
@@ -109,6 +110,7 @@ const char* libqemu_get_target_name(void);
  * @return 0 on success, error code otherwise.
  */
 int libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst, LLVMValueRef * function);
+typedef int(*libqemu_gen_intermediate_code_fn)(uint64_t, CodeFlags, bool, LLVMValueRef*);
 
 /**
  * Raise an error which will abort IR translation.
@@ -118,6 +120,7 @@ int libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst
  * @param code Error code. Should not be 0.
  */
 __attribute__((noreturn)) void libqemu_raise_error(void *env, int code);
+typedef void(*libqemu_raise_error_fn)(void*, int);
 
 #ifdef __cplusplus
 }
