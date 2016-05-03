@@ -825,8 +825,21 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
     TCGOpDef &def = tcg_op_defs[opc];
 
     switch(opc) {
-    case INDEX_op_insn_start:
+    case INDEX_op_insn_start: {
+        llvm::LLVMContext& ctx = m_module->getContext();
+        llvm::Value* opcode_start_func = m_module->getOrInsertFunction("tcg-llvm.opcode_start", llvm::Type::getVoidTy(ctx), NULL);
+        llvm::CallInst* call_opcode_start = m_builder.CreateCall(opcode_start_func);
+        llvm::SmallVector<llvm::Value*, TARGET_INSN_START_WORDS> start_words;
+        for (unsigned i = 0; i < TARGET_INSN_START_WORDS; ++i) {
+#if TARGET_LONG_BITS > TCG_TARGET_REG_BITS
+            start_words.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx), (((uint64_t)args[i * 2 + 1]) << 32) | args[i * 2]));
+#else
+            start_words.push_back(llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx), args[i]));
+#endif
+        }
+        call_opcode_start->setMetadata("tcg-llvm.pc", llvm::MDNode::get(ctx, start_words));
         break;
+    }
 
     /* predefined ops */
     case INDEX_op_discard:
