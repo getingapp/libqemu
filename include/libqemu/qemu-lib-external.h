@@ -68,12 +68,14 @@ int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_han
  * @return Reference to LLVM module.
  */
 LLVMModuleRef libqemu_get_module(void);
+typedef LLVMModuleRef(*libqemu_get_module_fn)(void);
 
 /**
  * Get the name of the target that this library was built for.
  * @return Libqemu target name.
  */
 const char* libqemu_get_target_name(void);
+typedef const char*(*libqemu_get_target_name_fn)(void);
 
 /**
  * Generate LLVM intermediate code from machine code.
@@ -95,6 +97,9 @@ int libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst
  * @param code Error code. Should not be 0.
  */
 __attribute__((noreturn)) void libqemu_raise_error(void *env, int code);
+
+int libqemu_get_pc_indices(unsigned indices[], size_t* num_indices);
+typedef int(*libqemu_get_pc_indices_fn)(unsigned [], size_t*);
 
 #ifdef __cplusplus
 }
