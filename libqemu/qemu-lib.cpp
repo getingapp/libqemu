@@ -16,6 +16,7 @@ extern "C" {
 #include <llvm/IR/Verifier.h>
 #include <llvm/IR/Module.h>
 #include <libqemu/tcg-llvm.h>
+#include <libqemu/passes/CpuArchStructInfo.h>
 
 //int singlestep = 0;
 //int mem_prealloc = 0;
@@ -140,6 +141,32 @@ void libqemu_raise_error(void *env, int code)
 const char* libqemu_get_target_name(void)
 {
     return TARGET_NAME;
+}
+
+int libqemu_get_pc_indices(unsigned indices[], size_t* num_indices) 
+{
+    static std::unique_ptr<StructInfo> cpuArchStructInfo = StructInfo::getFromGlobalPointer(tcg_llvm_ctx->getModule(), "cpu_type_anchor");
+    llvm::SmallVector<unsigned, 20> vecIndices;
+#if defined(TARGET_ARM) 
+    cpuArchStructInfo->findMember(offsetof(CPUARMState, regs[15]), vecIndices);
+#elif defined(TARGET_I386) 
+    cpuArchStructInfo->findMember(offsetof(CPUX86State, eip), vecIndices);
+#elif defined(TARGET_X86_64) 
+    cpuArchStructInfo->findMember(offsetof(CPUX86State, rip), vecIndices);
+#else
+#error "Uknown cpu architecture"
+#endif
+
+    if (num_indices && *num_indices >= vecIndices.size()) {
+        for (unsigned i = 0; i < vecIndices.size(); ++i) {
+            indices[i] = vecIndices[i];
+        }
+        *num_indices = vecIndices.size();
+
+        return 0;
+    }
+
+    return 1;
 }
 
 int libqemu_gen_intermediate_code(uint64_t pc, CodeFlags flags, bool single_inst, LLVMValueRef * result)

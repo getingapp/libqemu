@@ -92,12 +92,14 @@ typedef int(*libqemu_init_fn)(libqemu_load_handler*, libqemu_store_handler);
  * @return Reference to LLVM module.
  */
 LLVMModuleRef libqemu_get_module(void);
+typedef LLVMModuleRef(*libqemu_get_module_fn)(void);
 
 /**
  * Get the name of the target that this library was built for.
  * @return Libqemu target name.
  */
 const char* libqemu_get_target_name(void);
+typedef const char*(*libqemu_get_target_name_fn)(void);
 
 /**
  * Generate LLVM intermediate code from machine code.
@@ -121,6 +123,9 @@ typedef int(*libqemu_gen_intermediate_code_fn)(uint64_t, CodeFlags, bool, LLVMVa
  */
 __attribute__((noreturn)) void libqemu_raise_error(void *env, int code);
 typedef void(*libqemu_raise_error_fn)(void*, int);
+
+int libqemu_get_pc_indices(unsigned indices[], size_t* num_indices);
+typedef int(*libqemu_get_pc_indices_fn)(unsigned [], size_t*);
 
 #ifdef __cplusplus
 }
