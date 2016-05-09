@@ -827,7 +827,12 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
     switch(opc) {
     case INDEX_op_insn_start: {
         llvm::LLVMContext& ctx = m_module->getContext();
-        llvm::Value* opcode_start_func = m_module->getOrInsertFunction("tcg-llvm.opcode_start", llvm::Type::getVoidTy(ctx), NULL);
+        llvm::AttrBuilder attrBuilder;
+        attrBuilder.addAttribute(llvm::Attribute::NoUnwind);
+        attrBuilder.addAttribute(llvm::Attribute::NoInline);
+        attrBuilder.addAttribute(llvm::Attribute::ReadNone);
+        attrBuilder.addAttribute(llvm::Attribute::NoAlias);
+        llvm::Value* opcode_start_func = m_module->getOrInsertFunction("tcg-llvm.opcode_start", llvm::AttributeSet::get(ctx, ~0L, attrBuilder), llvm::Type::getVoidTy(ctx), NULL);
         llvm::CallInst* call_opcode_start = m_builder.CreateCall(opcode_start_func);
         llvm::SmallVector<llvm::Value*, TARGET_INSN_START_WORDS> start_words;
         for (unsigned i = 0; i < TARGET_INSN_START_WORDS; ++i) {
