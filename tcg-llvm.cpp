@@ -843,6 +843,7 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
 #endif
         }
         call_opcode_start->setMetadata("tcg-llvm.pc", llvm::MDNode::get(ctx, start_words));
+        call_opcode_start->setMetadata("tcg-llvm.annotation", llvm::MDNode::get(ctx, llvm::SmallVector<llvm::Value*, 0>()));
         break;
     }
 
@@ -1585,6 +1586,7 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
 
         LLVMContext& ctx = newLoad->getContext();
         newLoad->setMetadata("tcg-llvm.env_access.indices", llvm::MDNode::get(ctx, gepIndices));
+        newLoad->setMetadata("tcg-llvm.env_access.offset", llvm::MDNode::get(ctx, llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx), offset)));
         newLoad->setMetadata("tcg-llvm.env_access.member_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, memberName)));
 
         eraseList.push_back(load);
@@ -1613,6 +1615,7 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
 
         llvm::LLVMContext& ctx = newStore->getContext();
         newStore->setMetadata("tcg-llvm.env_access.indices", llvm::MDNode::get(ctx, gepIndices));
+        newStore->setMetadata("tcg-llvm.env_access.offset", llvm::MDNode::get(ctx, llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx), offset)));
         newStore->setMetadata("tcg-llvm.env_access.member_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, memberName)));
 
         eraseList.push_back(store);
