@@ -18,6 +18,8 @@ extern "C" {
 #include <libqemu/tcg-llvm.h>
 #include <libqemu/passes/CpuArchStructInfo.h>
 
+void initRegisterInfo(void); //defined in <arch>_register_info.cpp
+
 //int singlestep = 0;
 //int mem_prealloc = 0;
 
@@ -108,8 +110,10 @@ int libqemu_init(libqemu_load_handler *ld_handler, libqemu_store_handler *st_han
     tcg_llvm_ctx = tcg_llvm_initialize();
     
     qemu_set_log_filename("/tmp/qemu.log");
-    
     qemu_set_log(qemu_str_to_log_mask("in_asm,op"));
+
+    initRegisterInfo();
+
     return 0;
 }
 

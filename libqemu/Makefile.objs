@@ -1,4 +1,7 @@
 #obj-y = stubs.o uaccess.o mmap.o qemu-lib.o signal.o passes/
-obj-y = qemu-lib.o passes/ helper.o
+obj-y = qemu-lib.o passes/ helper.o common_register_info.o
+obj-$(TARGET_ARM) += arm/
+obj-$(TARGET_I386) += i386/
+obj-$(TARGET_X86_64) += x86_64/
 #obj-$(TARGET_I386) += vm86.o
 #obj-y += syscall.o uname.o
