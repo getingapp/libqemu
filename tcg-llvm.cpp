@@ -43,6 +43,7 @@ extern "C" {
 
 #include <libqemu/tcg-llvm.h>
 #include <libqemu/passes/CpuArchStructInfo.h>
+#include <libqemu/register_info.h>
 
 extern "C" {
 #include "config.h"
@@ -1588,6 +1589,10 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
         newLoad->setMetadata("tcg-llvm.env_access.indices", llvm::MDNode::get(ctx, gepIndices));
         newLoad->setMetadata("tcg-llvm.env_access.offset", llvm::MDNode::get(ctx, llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx), offset)));
         newLoad->setMetadata("tcg-llvm.env_access.member_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, memberName)));
+        RegisterInfo const* regInfo = libqemu_get_register_info_by_offset(offset);
+        if (regInfo) {
+            newLoad->setMetadata("tcg-llvm.env_access.register_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, regInfo->name)));
+        }
 
         eraseList.push_back(load);
     }
@@ -1617,6 +1622,10 @@ void TCGLLVMContextPrivate::replaceEnvInstructionsWith(
         newStore->setMetadata("tcg-llvm.env_access.indices", llvm::MDNode::get(ctx, gepIndices));
         newStore->setMetadata("tcg-llvm.env_access.offset", llvm::MDNode::get(ctx, llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx), offset)));
         newStore->setMetadata("tcg-llvm.env_access.member_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, memberName)));
+        RegisterInfo const* regInfo = libqemu_get_register_info_by_offset(offset);
+        if (regInfo) {
+            newStore->setMetadata("tcg-llvm.env_access.register_name", llvm::MDNode::get(ctx, llvm::MDString::get(ctx, regInfo->name)));
+        }
 
         eraseList.push_back(store);
     }
