@@ -129,7 +129,7 @@ static std::unique_ptr<StructInfo> getCpuArchStructInfo(Module *module)
                 continue;
             }
 
-            assert(diGlobalVar.getType().isDerivedType());
+            assert(diGlobalVar.getType().resolve(*typeIdentifierMap).isDerivedType());
             DIDerivedType diEnvPtrType(diGlobalVar.getType().resolve(*typeIdentifierMap));
             assert(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap).isCompositeType());
             return std::unique_ptr<StructInfo>(new StructInfo(module, structType, new DICompositeType(diEnvPtrType.getTypeDerivedFrom().resolve(*typeIdentifierMap)), typeIdentifierMap));
