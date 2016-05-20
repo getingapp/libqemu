@@ -33,13 +33,13 @@
 
 /* Default target word size to pointer size.  */
 #ifndef TCG_TARGET_REG_BITS
-# if UINTPTR_MAX == UINT32_MAX
-#  define TCG_TARGET_REG_BITS 32
-# elif UINTPTR_MAX == UINT64_MAX
+//# if UINTPTR_MAX == UINT32_MAX
+//#  define TCG_TARGET_REG_BITS 32
+//# elif UINTPTR_MAX == UINT64_MAX
 #  define TCG_TARGET_REG_BITS 64
-# else
-#  error Unknown pointer size for tcg target
-# endif
+//# else
+//#  error Unknown pointer size for tcg target
+//# endif
 #endif
 
 #if TCG_TARGET_REG_BITS == 32
