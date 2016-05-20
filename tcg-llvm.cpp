@@ -234,9 +234,8 @@ public:
     /* Shortcuts */
     llvm::Type* intType(int w) { return IntegerType::get(m_context, w); }
     llvm::Type* intPtrType(int w) { return PointerType::get(intType(w), 0); }
-    llvm::Type* wordType() { return intType(TCG_TARGET_REG_BITS); }
-    llvm::Type* wordType(int bits) { return intType(bits); }
-    llvm::Type* wordPtrType() { return intPtrType(TCG_TARGET_REG_BITS); }
+    llvm::Type* wordType(int bits = TARGET_LONG_BITS) { return intType(bits); }
+    llvm::Type* wordPtrType() { return intPtrType(TARGET_LONG_BITS); }
 
     void adjustTypeSize(unsigned target, Value **v1) {
         Value *va = *v1;
@@ -411,9 +410,11 @@ TCGLLVMContextPrivate::TCGLLVMContextPrivate()
     llvm::SMDiagnostic smerror;
     m_module = llvm::ParseIR( 
         llvm::MemoryBuffer::getMemBuffer( 
-            StringRef(&_binary_helpers_bcm_start, &_binary_helpers_bcm_end - &_binary_helpers_bcm_start)),
-            smerror,
-            m_context);
+            StringRef(&_binary_helpers_bcm_start, &_binary_helpers_bcm_end - &_binary_helpers_bcm_start),
+            "op_helpers.bc", 
+            false),
+        smerror,
+        m_context);
 
     m_archcpuPtrType = m_module->getGlobalVariable("cpu_type_anchor", false)->getType();
     m_cpuArchStructInfo = StructInfo::getFromGlobalPointer(m_module, "cpu_type_anchor");
@@ -640,9 +641,7 @@ void TCGLLVMContextPrivate::initGlobalsAndLocalTemps()
 {
     TCGContext *s = m_tcgContext;
 
-    int reg_to_idx[TCG_TARGET_NB_REGS];
-    for(int i=0; i<TCG_TARGET_NB_REGS; ++i)
-        reg_to_idx[i] = -1;
+    int reg_to_idx[TCG_TARGET_NB_REGS] = {-1};
 
     int argNumber = 0;
     for(int i=0; i<s->nb_globals; ++i) {
@@ -895,14 +894,12 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
             std::vector<Value*> argValues;
             argValues.reserve(nb_iargs);
             Function::arg_iterator curHelperArg = helperFunc->arg_begin();
-            Function::arg_iterator endHelperArg = helperFunc->arg_end();
-
 
             for(int i=0; i < nb_iargs; ++i) {
                 TCGArg arg = args[nb_oargs + i];
                 if(arg != TCG_CALL_DUMMY_ARG) {
                     Value *v = getValue(arg);
-                    assert(curHelperArg && (curHelperArg != endHelperArg));
+                    assert(curHelperArg && (curHelperArg != helperFunc->arg_end()));
                     if (curHelperArg->getType() != v->getType()) {
                         if (v->getType()->isIntegerTy() && curHelperArg->getType()->isPointerTy()) {
                             v = m_builder.CreateIntToPtr(v, curHelperArg->getType(), v->getName());
@@ -1034,6 +1031,8 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
     __EXT_OP(INDEX_op_ext32s_i64, 32, 64, S)
     __EXT_OP(INDEX_op_ext32u_i64, 32, 64, Z)
 #endif
+    __EXT_OP(INDEX_op_extu_i32_i64, 32, 64, Z)
+    __EXT_OP(INDEX_op_ext_i32_i64, 32, 64, S)
 
 #undef __EXT_OP
 
@@ -1390,7 +1389,6 @@ void TCGLLVMContextPrivate::generateOperation(TCGOp *op, const TCGArg *args)
         setValue(args[0], m_builder.CreateOr(ret, t1));
         break;
     }
-
     default:
         std::cerr << "ERROR: unknown TCG micro operation '"
                   << def.name << "'" << std::endl;
@@ -1757,7 +1755,7 @@ void TCGLLVMContext::initializeHelpers()
 
 void TCGLLVMContext::generateCode(TCGContext *s, TranslationBlock *tb)
 {
-    assert(tb->opaque == NULL);
+    assert(!tb->opaque);
 //    assert(static_cast<TCGPluginTBData *>(tb->opaque)->tcg_llvm_context == NULL);
 //    assert(static_cast<TCGPluginTBData *>(tb->opaque)->llvm_function == NULL);
     
