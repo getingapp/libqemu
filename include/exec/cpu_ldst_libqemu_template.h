@@ -23,19 +23,23 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 #if DATA_SIZE == 8
+#define SHIFT 3
 #define SUFFIX q
 #define USUFFIX q
 #define DATA_TYPE uint64_t
 #elif DATA_SIZE == 4
+#define SHIFT 2
 #define SUFFIX l
 #define USUFFIX l
 #define DATA_TYPE uint32_t
 #elif DATA_SIZE == 2
+#define SHIFT 1
 #define SUFFIX w
 #define USUFFIX uw
 #define DATA_TYPE uint16_t
 #define DATA_STYPE int16_t
 #elif DATA_SIZE == 1
+#define SHIFT 0
 #define SUFFIX b
 #define USUFFIX ub
 #define DATA_TYPE uint8_t
@@ -50,10 +54,22 @@
 #define RES_TYPE uint32_t
 #endif
 
+#if defined(CODE_ACCESS)
+#define CODE_ACCESS_FLAG MO_CODE
+#define CPU_MMU_INDEX 1
+#else /* defined(CODE_ACCESS) */
+#define CODE_ACCESS_FLAG 0
+#define CPU_MMU_INDEX 0
+#endif /* defined(CODE_ACCESS) */
+
+#ifndef MO_SIGN
+#define MO_SIGN 4
+#endif 
+
 static inline RES_TYPE
 glue(glue(cpu_ld, USUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr)
 {
-    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, false, IS_CODE_ACCESS);
+    return (RES_TYPE) libqemu_ld(env, ptr, SHIFT | CODE_ACCESS_FLAG, CPU_MMU_INDEX);
 }
 
 static inline RES_TYPE
@@ -61,14 +77,14 @@ glue(glue(glue(cpu_ld, USUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
                                                   target_ulong ptr,
                                                   uintptr_t retaddr)
 {
-    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, false, IS_CODE_ACCESS);
+    return (RES_TYPE) libqemu_ld(env, ptr, SHIFT | CODE_ACCESS_FLAG, CPU_MMU_INDEX);
 }
 
 #if DATA_SIZE <= 2
 static inline int
 glue(glue(cpu_lds, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr)
 {
-    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS);
+    return (RES_TYPE) libqemu_ld(env, ptr, SHIFT | CODE_ACCESS_FLAG | MO_SIGN, CPU_MMU_INDEX);
 }
 
 static inline int
@@ -76,7 +92,7 @@ glue(glue(glue(cpu_lds, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
                                                   target_ulong ptr,
                                                   uintptr_t retaddr)
 {
-    return (RES_TYPE) libqemu_ld(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS);
+    return (RES_TYPE) libqemu_ld(env, ptr, SHIFT | CODE_ACCESS_FLAG | MO_SIGN, CPU_MMU_INDEX);
 }
 #endif
 
@@ -85,7 +101,7 @@ static inline void
 glue(glue(cpu_st, SUFFIX), MEMSUFFIX)(CPUArchState *env, target_ulong ptr,
                                       RES_TYPE v)
 {
-    libqemu_st(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS, v);
+    libqemu_st(env, ptr, SHIFT, CPU_MMU_INDEX, v);
 }
 
 static inline void
@@ -94,7 +110,7 @@ glue(glue(glue(cpu_st, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
                                                   RES_TYPE v,
                                                   uintptr_t retaddr)
 {
-    libqemu_st(env, ptr, DATA_SIZE, true, IS_CODE_ACCESS, v);
+    libqemu_st(env, ptr, SHIFT, CPU_MMU_INDEX, v);
 }
 #endif
 
@@ -104,3 +120,7 @@ glue(glue(glue(cpu_st, SUFFIX), MEMSUFFIX), _ra)(CPUArchState *env,
 #undef SUFFIX
 #undef USUFFIX
 #undef DATA_SIZE
+#undef SHIFT
+#undef MO_SIGN
+#undef CPU_MMU_INDEX
+#undef CODE_ACCESS_FLAG

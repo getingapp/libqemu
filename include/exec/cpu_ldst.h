@@ -85,7 +85,6 @@
 /* In user-only mode we provide only the _code and _data accessors. */
 
 #define MEMSUFFIX _data
-#define IS_CODE_ACCESS false
 #define DATA_SIZE 1
 #include "exec/cpu_ldst_libqemu_template.h"
 
@@ -98,11 +97,9 @@
 #define DATA_SIZE 8
 #include "exec/cpu_ldst_libqemu_template.h"
 #undef MEMSUFFIX
-#undef IS_CODE_ACCESS
 
 #define MEMSUFFIX _code
 #define CODE_ACCESS
-#define IS_CODE_ACCESS true
 #define DATA_SIZE 1
 #include "exec/cpu_ldst_libqemu_template.h"
 
@@ -116,7 +113,6 @@
 #include "exec/cpu_ldst_libqemu_template.h"
 #undef MEMSUFFIX
 #undef CODE_ACCESS
-#undef IS_CODE_ACCESS
 
 #elif defined(CONFIG_USER_ONLY) 
 
